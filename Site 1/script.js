@@ -24,8 +24,8 @@ const PAGE_SECRETE = "secret.html";
 // Valeur à modifier : mot de passe requis pour la connexion.
 const MOT_DE_PASSE_CONNEXION = "total";
 // URL à modifier : page ouverte après la transition CRT.
-// (le dossier s'appelle "site secret" avec une espace, encodée en %20)
-const PAGE_APRES_CONNEXION = "/site_secret/secret.html";
+// Chemin relatif (sans "/" au début) : marche en local et dans un sous-dossier.
+const PAGE_APRES_CONNEXION = "site_secret/secret.html";
 
 // Durées de la séquence (en millisecondes)
 const DELAI_POPUP_AVANT_CRT = 1300;        // popup de succès visible avant l'extinction
@@ -51,7 +51,7 @@ function construireHeader(pageActive) {
     <div class="container header__inner">
       <a href="index.html" class="header__logo">
         <!-- REMPLACER ICI : chemin de votre logo -->
-        <img src="IMAGE_LOGO_ICI.png" alt="Pickaxe logo">
+        <img src="LOGOPICKAXE.png" alt="Pickaxe logo">
       </a>
 
       <nav class="nav" aria-label="Navigation principale">
@@ -179,6 +179,7 @@ function initialiserConnexion() {
   if (!formulaire || !champ || !message || !modale || !boutonContinuer) return;
 
   let sequenceLancee = false; // empêche de lancer la transition deux fois
+  let timerCRT = null;        // minuteur auto, annulé si "Continuer" est cliqué
 
   // Affiche la pop-up de succès, puis enchaîne tout seul sur la transition CRT
   const reussirConnexion = () => {
@@ -187,7 +188,7 @@ function initialiserConnexion() {
     message.textContent = '';
     modale.hidden = false;
     boutonContinuer.focus();
-    setTimeout(lancerTransitionCRT, DELAI_POPUP_AVANT_CRT);
+    timerCRT = setTimeout(lancerTransitionCRT, DELAI_POPUP_AVANT_CRT);
   };
 
   // "submit" couvre le bouton ET la touche Entrée
@@ -217,6 +218,7 @@ function initialiserConnexion() {
   // Le bouton "Continuer" reste utilisable : il lance la transition sans attendre
   boutonContinuer.addEventListener('click', () => {
     if (document.querySelector('.crt-overlay')) return; // déjà en cours
+    clearTimeout(timerCRT); // évite une 2e transition / redirection
     sequenceLancee = true;
     lancerTransitionCRT();
   });

@@ -541,7 +541,7 @@ window.addEventListener('pageshow', function (event) {
           <td class="redacted-cell">Mac Kinney</td>
           <td class="redacted-cell">███</td>
           <td>Directeur Général</td>
-          <td><span class="status-badge "">Indéfini</span></td>
+          <td><span class="status-badge ">Indéfini</span></td>
         </tr>
         <tr>
           <td class="redacted-cell">████ Jeanne</td>
@@ -590,6 +590,10 @@ window.addEventListener('pageshow', function (event) {
     const photoNum = String(currentPhotoIndex + 1).padStart(3, '0');
     const infoEl = $('#gallery-image-info');
     if (infoEl) infoEl.textContent = `Photo ${photoNum}`;
+    const placeholderEl = $('#gallery-placeholder');
+    if (placeholderEl) placeholderEl.textContent = photoNum;
+    const counterEl = $('#gallery-counter');
+    if (counterEl) counterEl.textContent = currentPhotoIndex + 1;
     updateGalleryButtons();
   }
 
@@ -641,19 +645,16 @@ window.addEventListener('pageshow', function (event) {
   `;
 
   // Événements galerie
+  // (délai de 10 ms non nécessaire : le HTML ci-dessus existe déjà ; conservé tel quel)
   setTimeout(() => {
     const prevBtn = $('#gallery-prev');
     const nextBtn = $('#gallery-next');
-    const counterEl = $('#gallery-counter');
 
     if (prevBtn) {
       prevBtn.addEventListener('click', () => {
         if (currentPhotoIndex > 0) {
           currentPhotoIndex--;
           updateGallery();
-          const placeholderEl = $('#gallery-placeholder');
-          if (placeholderEl) placeholderEl.textContent = String(currentPhotoIndex + 1).padStart(3, '0');
-          if (counterEl) counterEl.textContent = currentPhotoIndex + 1;
         }
       });
     }
@@ -663,9 +664,6 @@ window.addEventListener('pageshow', function (event) {
         if (currentPhotoIndex < totalPhotos - 1) {
           currentPhotoIndex++;
           updateGallery();
-          const placeholderEl = $('#gallery-placeholder');
-          if (placeholderEl) placeholderEl.textContent = String(currentPhotoIndex + 1).padStart(3, '0');
-          if (counterEl) counterEl.textContent = currentPhotoIndex + 1;
         }
       });
     }
@@ -675,9 +673,6 @@ window.addEventListener('pageshow', function (event) {
       thumb.addEventListener('click', (e) => {
         currentPhotoIndex = parseInt(e.target.dataset.index);
         updateGallery();
-        const placeholderEl = $('#gallery-placeholder');
-        if (placeholderEl) placeholderEl.textContent = String(currentPhotoIndex + 1).padStart(3, '0');
-        if (counterEl) counterEl.textContent = currentPhotoIndex + 1;
       });
     });
   }, 10);
@@ -771,12 +766,21 @@ window.addEventListener('pageshow', function (event) {
   // Gestion authentification données
   let secureUnlocked = false;
 
+  // (délai de 10 ms non nécessaire : le HTML ci-dessus existe déjà ; conservé tel quel)
   setTimeout(() => {
     const submitBtn = $('#secure-submit');
     const passwordInput = $('#secure-password');
     const authMsg = $('#auth-message');
     const authForm = $('#secure-auth-form');
     const secureTabs = $('#secure-tabs');
+
+    // Entrée dans le champ = même contrôle que le bouton Valider (sans rechargement)
+    if (authForm && submitBtn) {
+      authForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        submitBtn.click();
+      });
+    }
 
     if (submitBtn) {
       submitBtn.addEventListener('click', () => {
@@ -932,6 +936,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
     }
   });
 
+  // (délai de 10 ms non nécessaire : le HTML ci-dessus existe déjà ; conservé tel quel)
   setTimeout(() => {
     const refreshBtn = $('#refresh-emails');
     if (refreshBtn) {
@@ -1092,15 +1097,17 @@ Plus d'informations lors de la prochaine réunion de coordination.`
 
   // --- Réduire / restaurer via la barre des tâches ---
   const taskBtn = $('#task-btn');
+  let timerMasquage = null; // annulé si la fenêtre est restaurée avant 300 ms
 
   $('#btn-min').addEventListener('click', (e) => {
     e.stopPropagation();
     fenetre.classList.add('minimizing');
     taskBtn.classList.remove('hidden');
-    setTimeout(() => { fenetre.style.visibility = 'hidden'; }, 300);
+    timerMasquage = setTimeout(() => { fenetre.style.visibility = 'hidden'; }, 300);
   });
 
   taskBtn.addEventListener('click', () => {
+    clearTimeout(timerMasquage);
     fenetre.style.visibility = 'visible';
     // Force le recalcul pour que la transition s'applique
     void fenetre.offsetWidth;
@@ -1423,10 +1430,14 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       closeBtn.addEventListener('click', () => {
         overlay.classList.remove('visible');
         input.value = '';
+        input.blur();
       });
 
+      // Garde le focus seulement quand le terminal est ouvert
       input.addEventListener('blur', () => {
-        setTimeout(() => input.focus(), 10);
+        setTimeout(() => {
+          if (overlay.classList.contains('visible')) input.focus();
+        }, 10);
       });
     },
     
@@ -1480,7 +1491,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       this.log(cmd);
       this.log('');
 
-      if (cmd === '' || cmd.startsWith(' ')) {
+      if (cmd === '') {
         return;
       }
 
@@ -1594,6 +1605,8 @@ Plus d'informations lors de la prochaine réunion de coordination.`
             const input = $('#terminal-input');
             if (input) input.focus();
           }, 10);
+        } else {
+          $('#terminal-input').blur();
         }
       }
     }
@@ -1605,6 +1618,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       const overlay = $('#terminal-overlay');
       if (overlay && overlay.classList.contains('visible')) {
         overlay.classList.remove('visible');
+        $('#terminal-input').blur();
       }
     }
   });
