@@ -1360,6 +1360,35 @@ Plus d'informations lors de la prochaine réunion de coordination.`
      10. TERMINAL HACKER (Cmd+Shift+D)
      ========================================================== */
 
+  /* ---- CONFIG CAMÉRAS (seul endroit à modifier) ----
+     Déposer les vidéos (format .mp4) dans site_secret/videos/ avec ces noms,
+     puis passer "disponible" à true pour la caméra concernée.
+     Tant que "disponible" vaut false, un placeholder s'affiche (aucune
+     requête, donc aucune erreur dans la console).
+     locked: true = flux verrouillé (ACCESS DENIED), comme dans le document Caméras. */
+  const CAMERAS = {
+    '001': { video: 'videos/camera001.mp4', disponible: false },
+    '002': { video: 'videos/camera002.mp4', disponible: false, locked: true },
+    '003': { video: 'videos/camera003.mp4', disponible: false },
+    '004': { video: 'videos/camera004.mp4', disponible: false },
+    '005': { video: 'videos/camera005.mp4', disponible: false },
+    '006': { video: 'videos/camera006.mp4', disponible: false, locked: true },
+    '007': { video: 'videos/camera007.mp4', disponible: false }
+  };
+
+  // Animations passées d'office si l'utilisateur préfère un mouvement réduit
+  const MOUVEMENT_REDUIT = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /** Documents d'Informations : censure levée (état gardé pour la session) */
+  function appliquerDecryptage() {
+    const infos = $('#contenu-informations');
+    if (infos) infos.classList.add('decrypte');
+    majScrollbar();
+  }
+  try {
+    if (sessionStorage.getItem('docs_decryptes') === '1') appliquerDecryptage();
+  } catch (e) {}
+
   const terminal = {
     history: [],
     historyIndex: 0,
@@ -1386,6 +1415,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
             <div class="terminal-input-line">
               <span class="terminal-prompt">C:\\></span>
               <input type="text" class="terminal-input" id="terminal-input" placeholder="Commande..." autocomplete="off" spellcheck="false" />
+              <span class="terminal-cursor" id="terminal-cursor" aria-hidden="true"></span>
             </div>
           </div>
         </div>
@@ -1404,6 +1434,11 @@ Plus d'informations lors de la prochaine réunion de coordination.`
 
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
+          // Animation en cours : Entrée l'affiche en entier, sans lancer de commande
+          if (this.anim.actif) {
+            this.passer();
+            return;
+          }
           const cmd = input.value.trim();
           this.executeCommand(cmd);
           this.history.push(cmd);
@@ -1433,6 +1468,9 @@ Plus d'informations lors de la prochaine réunion de coordination.`
         input.blur();
       });
 
+      // Curseur bloc : repositionné à chaque saisie / déplacement
+      ['input', 'keyup', 'click', 'focus'].forEach((ev) => input.addEventListener(ev, () => this.majCurseur()));
+
       // Garde le focus seulement quand le terminal est ouvert
       input.addEventListener('blur', () => {
         setTimeout(() => {
@@ -1449,44 +1487,224 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       line.textContent = text;
       body.appendChild(line);
       body.scrollTop = body.scrollHeight;
+      return line;
     },
 
-    showCamera: function(num) {
-      const cameraId = String(num).padStart(3, '0');
-      const videoPath = `/videos/camera${cameraId}.mp4`;
-      const separator = '━━━━━━━━━━━━━━━━━━━━━━';
+    /* ---------- Moteur d'animation (Entrée = tout afficher) ---------- */
+    anim: { actif: false, skip: false, attentes: [] },
 
-      if (!document.getElementById('terminal-video-style')) {
-        const style = document.createElement('style');
-        style.id = 'terminal-video-style';
-        style.textContent = '.terminal-video { display:block; width:100%; max-width:100%; height:auto; background:#000; border:1px solid #0f0; box-sizing:border-box; margin:8px 0; }';
-        document.head.appendChild(style);
+    /** Pause annulable : se résout tout de suite si l'animation est passée */
+    wait: function(ms) {
+      if (this.anim.skip) return Promise.resolve();
+      return new Promise((resolve) => {
+        const t = setTimeout(resolve, ms);
+        this.anim.attentes.push({ t, resolve });
+      });
+    },
+
+    /** Passe l'animation en cours : toutes les pauses se terminent */
+    passer: function() {
+      this.anim.skip = true;
+      this.anim.attentes.forEach(({ t, resolve }) => { clearTimeout(t); resolve(); });
+      this.anim.attentes = [];
+    },
+
+    /** Lance une séquence animée (une seule à la fois) */
+    run: function(sequence) {
+      if (this.anim.actif) return;
+      this.anim.actif = true;
+      this.anim.skip = MOUVEMENT_REDUIT;
+      return sequence().catch(() => {}).then(() => {
+        this.anim.actif = false;
+        this.anim.attentes = [];
+        this.majCurseur();
+      });
+    },
+
+    /** Ligne tapée caractère par caractère */
+    type: async function(text, type = 'default', vitesse = 12) {
+      const line = this.log('', type);
+      for (let i = 0; i <= text.length; i += 2) {
+        if (this.anim.skip) break;
+        line.textContent = text.slice(0, i);
+        await this.wait(vitesse);
+      }
+      line.textContent = text;
+      return line;
+    },
+
+    /** Barre de progression ASCII ([██████░░░░] 62 %) */
+    barre: async function(label, cible = 100, duree = 700) {
+      const line = this.log('');
+      const dessiner = (p) => {
+        const plein = Math.round(p / 10);
+        line.textContent = `${label} [${'█'.repeat(plein)}${'░'.repeat(10 - plein)}] ${p} %`;
+      };
+      for (let p = 0; p < cible; p += 10) {
+        if (this.anim.skip) break;
+        dessiner(p);
+        await this.wait(duree / 10);
+      }
+      dessiner(cible);
+      return line;
+    },
+
+    /** Faux déchiffrement : caractères aléatoires qui se stabilisent */
+    dechiffrer: async function(prefixe, valeur, type = 'default', duree = 500) {
+      const line = this.log('', type);
+      const signes = '█▓▒░#%&@$*+=?';
+      const etapes = 10;
+      for (let e = 0; e < etapes; e++) {
+        if (this.anim.skip) break;
+        const fixes = Math.floor(valeur.length * e / etapes);
+        let brouille = valeur.slice(0, fixes);
+        for (let i = fixes; i < valeur.length; i++) {
+          brouille += valeur[i] === ' ' ? ' ' : signes[Math.floor(Math.random() * signes.length)];
+        }
+        line.textContent = prefixe + brouille;
+        await this.wait(duree / etapes);
+      }
+      line.textContent = prefixe + valeur;
+      return line;
+    },
+
+    /** Ligne d'erreur stylisée (ACCESS DENIED) avec tremblement */
+    refuser: function(texte) {
+      const line = this.log(texte, 'error');
+      if (line && !MOUVEMENT_REDUIT) line.classList.add('tremble');
+      return line;
+    },
+
+    /** Message système inquiétant : ~1 commande sur 6, jamais deux de suite */
+    dernierSys: false,
+    messageSysteme: function() {
+      if (!this.dernierSys && Math.random() < 1 / 6) {
+        const messages = ['[sys] activité enregistrée', '[sys] tentative de traçage IP…', '[sys] session surveillée'];
+        this.log(messages[Math.floor(Math.random() * messages.length)], 'warning');
+        this.dernierSys = true;
+      } else {
+        this.dernierSys = false;
+      }
+    },
+
+    /** Curseur bloc : suit la position de saisie dans le champ */
+    majCurseur: function() {
+      const input = $('#terminal-input');
+      const curseur = $('#terminal-cursor');
+      if (!input || !curseur) return;
+      const ctx = (this._mesure = this._mesure || document.createElement('canvas').getContext('2d'));
+      const style = getComputedStyle(input);
+      ctx.font = `${style.fontSize} ${style.fontFamily}`;
+      const pos = input.selectionStart == null ? input.value.length : input.selectionStart;
+      const x = input.offsetLeft + ctx.measureText(input.value.slice(0, pos)).width - input.scrollLeft;
+      curseur.style.left = Math.min(x, input.offsetLeft + input.clientWidth - 7) + 'px';
+      curseur.style.visibility = this.anim.actif ? 'hidden' : 'visible';
+    },
+
+    /* ---------- Ouverture du terminal ---------- */
+    bootFait: false,
+    ouverture: function() {
+      if (this.bootFait) {
+        this.run(async () => { await this.type('Reprise de session…', 'default', 15); });
+        return;
+      }
+      this.bootFait = true;
+      const body = $('#terminal-body');
+      if (body) body.innerHTML = '';
+      this.run(async () => {
+        await this.type('Initialisation du noyau…');
+        await this.barre('Chargement', 100, 600);
+        await this.type('Connexion au nœud interne… OK');
+        await this.wait(250);
+        await this.type('⚠ Session non répertoriée : connexion tracée.', 'warning', 18);
+        this.log('');
+        this.log('Bienvenue dans le terminal système PICKAXE');
+        this.log('Tapez /help pour obtenir de l\'aide');
+        this.log('');
+      });
+    },
+
+    /* ---------- Caméras (tâche B) ---------- */
+    cmdCamera: async function(id) {
+      const camera = CAMERAS[id];
+      if (!camera) {
+        this.refuser(`ACCESS DENIED – flux introuvable : /camera${id}`);
+        this.log('');
+        return;
       }
 
-      this.log(separator);
-      this.log(`📹 CAMÉRA ${cameraId}`);
-      this.log(separator);
-      this.log('');
+      await this.type(`Établissement du flux CAM-${id}…`);
+      if (camera.locked) {
+        await this.barre('Liaison', 40, 400);
+        this.refuser(`ACCESS DENIED – flux verrouillé : /camera${id}`);
+        this.log('');
+        return;
+      }
+      await this.barre('Liaison', 100, 700);
 
-      const body = $('#terminal-body');
-      const videoLine = body && body.lastElementChild;
-      if (videoLine) {
+      const cadre = document.createElement('div');
+      cadre.className = 'terminal-camera';
+      cadre.innerHTML = `
+        <div class="terminal-camera__titre"><span>CAMÉRA ${id}</span><span class="terminal-camera__rec">● REC</span></div>
+        <div class="terminal-camera__ecran"><span class="terminal-camera__horloge"></span></div>`;
+      const ecran = cadre.querySelector('.terminal-camera__ecran');
+      const placeholder = () => {
+        const p = document.createElement('div');
+        p.className = 'terminal-camera__placeholder';
+        p.textContent = `[PLACEHOLDER] Caméra ${id} opérationnelle, vidéo attendue : ${camera.video}`;
+        return p;
+      };
+
+      if (camera.disponible) {
         const video = document.createElement('video');
-        video.src = videoPath;
+        video.className = 'terminal-video';
+        video.src = camera.video;
         video.controls = true;
         video.autoplay = true;
         video.muted = true;
         video.loop = true;
-        video.className = 'terminal-video';
-        video.onerror = () => {
-          videoLine.textContent = `[VIDEO PLACEHOLDER - ${videoPath}]`;
-        };
-        videoLine.appendChild(video);
+        video.onerror = () => video.replaceWith(placeholder());
+        ecran.prepend(video);
+      } else {
+        ecran.prepend(placeholder());
       }
 
-      this.log(separator);
+      // Horodatage qui défile tant que le cadre est affiché
+      const horloge = cadre.querySelector('.terminal-camera__horloge');
+      const p2 = (n) => String(n).padStart(2, '0');
+      const tic = () => {
+        if (!cadre.isConnected) { clearInterval(minuteur); return; }
+        const d = new Date();
+        horloge.textContent = `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`;
+      };
+      const minuteur = setInterval(tic, 1000);
+
+      const body = $('#terminal-body');
+      body.appendChild(cadre);
+      tic();
+      body.scrollTop = body.scrollHeight;
+      this.log('');
     },
-    
+
+    /* ---------- Décryptage des documents (Cmd/Ctrl+Shift+X) ---------- */
+    decrypter: function() {
+      this.run(async () => {
+        if (sessionStorage.getItem('docs_decryptes') === '1') {
+          await this.type('Documents d\'Informations déjà décryptés.', 'success');
+        } else {
+          await this.type('Décryptage des documents d\'Informations…');
+          await this.dechiffrer('  Protocole du Site ........ ', 'OK', 'default', 600);
+          await this.dechiffrer('  Caméras de Surveillance .. ', 'OK', 'default', 600);
+          await this.barre('Déchiffrement', 100, 700);
+          try { sessionStorage.setItem('docs_decryptes', '1'); } catch (e) {}
+          appliquerDecryptage();
+          await this.type('Documents d\'Informations décryptés', 'success', 15);
+        }
+        this.log('');
+        this.log('C:\\>');
+      });
+    },
+
     executeCommand: function(cmd) {
       this.log(cmd);
       this.log('');
@@ -1497,97 +1715,95 @@ Plus d'informations lors de la prochaine réunion de coordination.`
 
       const args = cmd.split(' ');
       const command = args[0].toLowerCase();
+      const camera = /^\/camera(\d+)$/.exec(command);
 
-      switch (command) {
-        case '/help':
-          this.log('═══════════════════════════════════════', 'success');
-          this.log('Commandes disponibles:', 'success');
-          this.log('═══════════════════════════════════════', 'success');
-          this.log('  /camera      - Afficher une archive caméra');
-          this.log('  /metadata    - Consulter les métadonnées système');
-          this.log('  /shortcuts   - Afficher les raccourcis clavier');
-          this.log('  /status      - État du système');
-          this.log('  /clear       - Effacer le terminal');
-          this.log('');
-          break;
-
-        case '/camera001':
-          this.showCamera(1);
-          break;
-
-        case '/camera002':
-          this.showCamera(2);
-          break;
-
-        case '/camera003':
-          this.showCamera(3);
-          break;
-
-        case '/camera004':
-          this.showCamera(4);
-          break;
-
-        case '/camera005':
-          this.showCamera(5);
-          break;
-
-        case '/camera006':
-          this.showCamera(6);
-          break;
-
-        case '/camera007':
-          this.showCamera(7);
-          break;
-
-        case '/metadata':
-          this.log('');
-          this.log('=== Métadonnées Système ===', 'success');
-          this.log('Utilisateur: ' + NOM_UTILISATEUR);
-          this.log('Domaine: PICKAXE.CORP');
-          this.log('Ordinateur: LAB-ADMIN-001');
-          this.log('OS: Microsoft Windows XP Professional');
-          this.log('Version: Build 2600');
-          this.log('Niveau d\'accès: 4 (Administrateur)');
-          this.log('Authentification: Biométrique + Mot de passe');
-          this.log('Chiffrement: AES-256');
-          this.log('Synchronisation: 2026-10-09 10:39:00');
-          this.log('');
-          break;
-
-        case '/shortcuts':
-          this.log('');
-          this.log('Raccourcis clavier disponibles:', 'success');
-          this.log('  Cmd+Shift+D  - Ouvrir/Fermer le terminal');
-          this.log('  Échap        - Fermer le terminal');
-          this.log('  ↑/↓          - Parcourir l\'historique');
-          this.log('  Tab          - Autocomplétion (à venir)');
-          this.log('');
-          break;
-
-        case '/status':
-          this.log('');
-          this.log('État du système:', 'success');
-          this.log('  CPU: 34%');
-          this.log('  Mémoire: 2.4 GB / 4 GB');
-          this.log('  Disque: 847 GB / 1 TB');
-          this.log('  Réseau: Connecté (PICKAXE.CORP)');
-          this.log('  Sécurité: ✓ Saine');
-          this.log('  Dernière mise à jour: 2026-09-28');
-          this.log('');
-          break;
-
-        case '/clear':
+      // /clear : effet CRT puis écran vidé (pas de message système)
+      if (command === '/clear') {
+        this.run(async () => {
           const bodyEl = $('#terminal-body');
-          if (bodyEl) bodyEl.innerHTML = '<div class="terminal-log">Terminal effacé</div><div class="terminal-log"></div>';
-          break;
-
-        default:
-          this.log(`Commande non reconnue: ${cmd}`, 'error');
-          this.log('Tapez /help pour obtenir de l\'aide.');
-          this.log('');
+          if (!MOUVEMENT_REDUIT) bodyEl.classList.add('efface');
+          await this.wait(200);
+          bodyEl.classList.remove('efface');
+          bodyEl.innerHTML = '<div class="terminal-log">Terminal effacé</div><div class="terminal-log"></div>';
+          this.log('C:\\>');
+        });
+        return;
       }
 
-      this.log('C:\\>');
+      this.run(async () => {
+        if (camera) {
+          await this.cmdCamera(camera[1].padStart(3, '0'));
+        } else {
+          switch (command) {
+            case '/help':
+              await this.type('═══════════════════════════════════════', 'success', 4);
+              await this.type('Commandes disponibles:', 'success', 8);
+              await this.type('═══════════════════════════════════════', 'success', 4);
+              await this.type('  /camera      - Afficher une archive caméra', 'default', 6);
+              await this.type('  /metadata    - Consulter les métadonnées système', 'default', 6);
+              await this.type('  /shortcuts   - Afficher les raccourcis clavier', 'default', 6);
+              await this.type('  /status      - État du système', 'default', 6);
+              await this.type('  /clear       - Effacer le terminal', 'default', 6);
+              this.log('');
+              break;
+
+            case '/metadata':
+              this.log('');
+              await this.type('=== Métadonnées Système ===', 'success', 8);
+              await this.dechiffrer('Utilisateur: ', NOM_UTILISATEUR, 'default', 150);
+              await this.dechiffrer('Domaine: ', 'PICKAXE.CORP', 'default', 150);
+              await this.dechiffrer('Ordinateur: ', 'LAB-ADMIN-001', 'default', 150);
+              await this.dechiffrer('OS: ', 'Microsoft Windows XP Professional', 'default', 150);
+              await this.dechiffrer('Version: ', 'Build 2600', 'default', 150);
+              await this.dechiffrer('Niveau d\'accès: ', '4 (Administrateur)', 'default', 150);
+              await this.dechiffrer('Authentification: ', 'Biométrique + Mot de passe', 'default', 150);
+              await this.dechiffrer('Chiffrement: ', 'AES-256', 'default', 150);
+              await this.dechiffrer('Synchronisation: ', '2026-10-09 10:39:00', 'default', 150);
+              this.log('');
+              break;
+
+            case '/shortcuts':
+              this.log('');
+              await this.type('Raccourcis clavier disponibles:', 'success', 8);
+              await this.type('  Cmd+Shift+D  - Ouvrir/Fermer le terminal', 'default', 6);
+              await this.type('  Cmd+Shift+X  - Lever la censure des documents', 'default', 6);
+              await this.type('  Échap        - Fermer le terminal', 'default', 6);
+              await this.type('  ↑/↓          - Parcourir l\'historique', 'default', 6);
+              await this.type('  Tab          - Autocomplétion (à venir)', 'default', 6);
+              this.log('');
+              break;
+
+            case '/status': {
+              this.log('');
+              await this.type('État du système:', 'success', 8);
+              await this.barre('  CPU:', 34, 300);
+              await this.barre('  Mémoire: 2.4 GB / 4 GB', 60, 300);
+              await this.barre('  Disque: 847 GB / 1 TB', 85, 300);
+              await this.type('  Réseau: Connecté (PICKAXE.CORP)', 'default', 6);
+              const securite = this.log('  Sécurité: ✓ Saine');
+              if (!this.anim.skip) {
+                await this.wait(400);
+                securite.textContent = '  Sécurité: ✗ COMPROMISE';
+                securite.className = 'terminal-log error';
+                await this.wait(250);
+              }
+              securite.textContent = '  Sécurité: ✓ Saine';
+              securite.className = 'terminal-log default';
+              await this.type('  Dernière mise à jour: 2026-09-28', 'default', 6);
+              this.log('');
+              break;
+            }
+
+            default:
+              this.log(`Commande non reconnue: ${cmd}`, 'error');
+              this.log('Tapez /help pour obtenir de l\'aide.');
+              this.log('');
+          }
+        }
+
+        this.messageSysteme();
+        this.log('C:\\>');
+      });
     }
   };
 
@@ -1605,11 +1821,21 @@ Plus d'informations lors de la prochaine réunion de coordination.`
             const input = $('#terminal-input');
             if (input) input.focus();
           }, 10);
+          terminal.ouverture();
         } else {
           $('#terminal-input').blur();
         }
       }
     }
+  });
+
+  // Raccourci Cmd/Ctrl+Shift+X : lever la censure (terminal ouvert uniquement)
+  document.addEventListener('keydown', (e) => {
+    if (!((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'KeyX')) return;
+    const overlay = $('#terminal-overlay');
+    if (!overlay || !overlay.classList.contains('visible')) return;
+    e.preventDefault();
+    terminal.decrypter();
   });
 
   // Échap pour fermer le terminal
