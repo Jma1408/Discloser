@@ -483,3 +483,37 @@ body.crt-extinction main {
   body.crt-extinction .banner, body.crt-extinction .footer,
   body.crt-extinction main { animation: none; }
 }
+/* ==========================================================
+   AJOUTS : footer complet, bandeau cookies, newsletter
+   (réutilisent les variables existantes)
+   ========================================================== */
+.footer__cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; padding-bottom: 36px; margin-bottom: 30px; border-bottom: 2px solid var(--gris-moyen); }
+.footer__cols h4 { font-family: var(--police-titre); font-weight: normal; font-size: 18px; letter-spacing: .3px; margin-bottom: 12px; }
+.footer__cols a { display: block; font-size: 14px; margin-bottom: 8px; }
+.footer__cols a:hover { opacity: 1; color: var(--jaune); }
+.footer__bourse { font-size: 13px; margin: 10px 0 16px; }
+.footer__bourse strong { display: block; color: var(--vert); margin-top: 4px; }
+.newsletter label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; }
+.newsletter input { flex: 1; min-width: 0; padding: 8px 12px; font-size: 13px; border: 1px solid var(--gris-moyen); border-radius: 6px; font-family: var(--police-texte); }
+.newsletter input:focus { outline: none; border-color: var(--jaune); }
+.newsletter .btn-petit { padding: 8px 16px; }
+.newsletter small { display: block; min-height: 16px; margin-top: 6px; font-size: 12px; color: #444; }
+.footer__social { display: flex; gap: 18px; margin-bottom: 24px; font-size: 13px; font-weight: bold; color: #444; }
+.footer__adresse { margin-top: 8px; font-size: 12px; line-height: 1.6; color: #555; }
+
+.bandeau-cookies {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  padding: 18px 32px; background: var(--blanc); border-top: 4px solid var(--jaune); box-shadow: 0 -4px 14px rgba(0,0,0,.12);
+  font-size: 14px; line-height: 1.5;
+}
+.bandeau-cookies a:not(.btn-petit) { text-decoration: underline; }
+.bandeau-cookies__btns { display: flex; gap: 10px; flex-shrink: 0; }
+
+@media (max-width: 900px) {
+  .footer__cols { grid-template-columns: repeat(2, 1fr); }
+  .bandeau-cookies { flex-direction: column; align-items: flex-start; padding: 16px 18px; }
+}
+@media (max-width: 560px) {
+  .footer__cols { grid-template-columns: 1fr; }
+}
