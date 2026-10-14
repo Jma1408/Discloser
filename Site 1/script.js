@@ -105,43 +105,6 @@ function construireFooter() {
   return `
   <footer class="footer footer--interne">
     <div class="container">
-      <div class="footer__cols">
-        <div>
-          <h4>Le Groupe</h4>
-          <a href="informations.html">Qui sommes-nous</a>
-          <a href="informations.html">Gouvernance</a>
-          <a href="informations.html">Engagements RSE</a>
-          <a href="in-progress.html">Espace presse</a>
-        </div>
-        <div>
-          <h4>Activités</h4>
-          <a href="plateforme-petroliere.html">Exploration-Production</a>
-          <a href="station-essence.html">Réseau de stations</a>
-          <a href="innovations.html">Innovations</a>
-          <a href="in-progress.html">Fournisseurs</a>
-        </div>
-        <div>
-          <h4>Carrières</h4>
-          <a href="nous-rejoindre.html">Nos offres</a>
-          <a href="nous-rejoindre.html">Candidature spontanée</a>
-        </div>
-        <div>
-          <h4>Investisseurs</h4>
-          <a href="informations.html">Résultats &amp; calendrier</a>
-          <p class="footer__bourse">PKX · Euronext Paris <strong id="bourse-pkx">63,42 € ▲ +0,84 %</strong></p>
-          <form class="newsletter" id="form-newsletter" novalidate>
-            <label for="champ-newsletter">Lettre d'information</label>
-            <div class="acces__ligne">
-              <input type="email" id="champ-newsletter" placeholder="Votre e-mail">
-              <button type="submit" class="btn-petit">OK</button>
-            </div>
-            <small id="msg-newsletter" aria-live="polite"></small>
-          </form>
-        </div>
-      </div>
-      <div class="footer__social" aria-label="Réseaux sociaux">
-        <span>LinkedIn</span><span>X</span><span>YouTube</span><span>Instagram</span>
-      </div>
       <div class="footer__links">
         <a href="mentions-legales.html">Mentions Légales</a>
         <i class="dot"></i>
@@ -155,10 +118,6 @@ function construireFooter() {
       </div>
       <div class="footer__line"></div>
       <strong class="footer__company">La Compagnie Pickaxe :</strong>
-      <p class="footer__adresse">
-        Pickaxe S.A. · 18 avenue de l'Arche, 92400 Courbevoie, France · +33 (0)1 47 44 58 00<br>
-        RCS Nanterre 548 210 936 · Capital social de 6 512 500 000 €
-      </p>
     </div>
   </footer>`;
 }
@@ -306,74 +265,6 @@ function initialiserCookies() {
 }
 
 /* =====================================================================
-   6. MICRO-INTERACTIONS (crédibilité du site corporate)
-   - Bandeau cookies : affiché tant que "Accepter" n'a pas été cliqué
-     (mémorisé dans localStorage, ignoré si le navigateur le bloque).
-   - Newsletter du footer : faux message de confirmation.
-   - Cours PKX du footer : légère variation au chargement.
-   - Localisateur (station-essence.html) : service "indisponible".
-   ===================================================================== */
-function initialiserBandeauCookies() {
-  let accepte = false;
-  try { accepte = localStorage.getItem('pk_cookies') === 'ok'; } catch (e) {}
-  if (accepte) return;
-
-  const bandeau = document.createElement('div');
-  bandeau.className = 'bandeau-cookies';
-  bandeau.innerHTML = `
-    <p>Pickaxe utilise des cookies pour améliorer votre expérience et mesurer l'audience du site.
-       <a href="politique-cookies.html">En savoir plus</a></p>
-    <div class="bandeau-cookies__btns">
-      <a href="parametrer-cookies.html" class="btn-petit btn-petit--gris">Paramétrer</a>
-      <button type="button" class="btn-petit" id="cookies-accepter">Accepter</button>
-    </div>`;
-  document.body.appendChild(bandeau);
-  bandeau.querySelector('#cookies-accepter').addEventListener('click', () => {
-    try { localStorage.setItem('pk_cookies', 'ok'); } catch (e) {}
-    bandeau.remove();
-  });
-}
-
-function initialiserNewsletter() {
-  const formulaire = document.getElementById('form-newsletter');
-  const champ = document.getElementById('champ-newsletter');
-  const message = document.getElementById('msg-newsletter');
-  if (!formulaire || !champ || !message) return;
-
-  formulaire.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const valide = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(champ.value.trim());
-    message.textContent = valide
-      ? 'Merci, votre inscription a bien été prise en compte.'
-      : 'Adresse e-mail invalide.';
-    if (valide) champ.value = '';
-  });
-}
-
-function initialiserCoursBourse() {
-  const cours = document.getElementById('bourse-pkx');
-  if (!cours) return;
-  const variation = 0.84 + (Math.random() - 0.5) * 0.3;  // entre +0,69 % et +0,99 %
-  const valeur = 62.89 * (1 + variation / 100);
-  const fr = (n) => n.toFixed(2).replace('.', ',');
-  cours.textContent = `${fr(valeur)} € ▲ +${fr(variation)} %`;
-}
-
-function initialiserLocalisateur() {
-  const formulaire = document.getElementById('form-localisateur');
-  const carte = document.getElementById('carte-localisateur');
-  if (!formulaire || !carte) return;
-
-  formulaire.addEventListener('submit', (e) => {
-    e.preventDefault();
-    carte.textContent = 'Recherche en cours…';
-    setTimeout(() => {
-      carte.textContent = 'Service de localisation momentanément indisponible. Veuillez réessayer ultérieurement.';
-    }, 1200);
-  });
-}
-
-/* =====================================================================
    DÉMARRAGE : un seul DOMContentLoaded pour tout le site
    ===================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
@@ -386,8 +277,66 @@ document.addEventListener('DOMContentLoaded', () => {
   initialiserConnexion();
   initialiserAccesPharma();
   initialiserCookies();
-  initialiserBandeauCookies();
-  initialiserNewsletter();
-  initialiserCoursBourse();
-  initialiserLocalisateur();
 });
+/* =====================================================================
+   7. EFFETS VISUELS (classe "fx" sur <body>)
+   Désactivés sur connexion, pharmaceutique et secret (pages de l'ARG).
+   - Header réduit au défilement (classe header--reduit)
+   - Apparition au défilement (classes reveal / reveal--visible),
+     une seule fois ; tout reste visible sans IntersectionObserver
+     ou si l'utilisateur préfère un mouvement réduit.
+   ===================================================================== */
+function initialiserEffets() {
+  const pageArg = document.getElementById('form-connexion')
+    || document.getElementById('message-code')
+    || /(^|\/)secret\.html$/.test(location.pathname);
+  if (pageArg) return;
+  document.body.classList.add('fx');
+
+  // Header : réduit + ombre dès qu'on a défilé
+  const header = document.querySelector('.header');
+  if (header) {
+    const majHeader = () => header.classList.toggle('header--reduit', window.scrollY > 40);
+    window.addEventListener('scroll', majHeader, { passive: true });
+    majHeader();
+  }
+
+  // Apparitions au défilement
+  const mouvementReduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (mouvementReduit || !('IntersectionObserver' in window)) return;
+
+  // Un bloc qui contient des cartes/chiffres/étapes : on anime ses enfants, pas le bloc
+  const cibles = [];
+  document.querySelectorAll('.bloc').forEach((bloc) => {
+    const enfants = bloc.querySelectorAll('.carte, .chiffre, .frise__item');
+    if (enfants.length) cibles.push(...enfants);
+    else cibles.push(bloc);
+  });
+  document.querySelectorAll('.main__img, .info-row, .cta__btn').forEach((el) => cibles.push(el));
+
+  const observateur = new IntersectionObserver((entrees) => {
+    entrees.forEach((entree) => {
+      if (!entree.isIntersecting) return;
+      const el = entree.target;
+      observateur.unobserve(el);
+      el.classList.add('reveal--visible');
+      // Une fois apparu, on rend l'élément à ses styles d'origine (survols compris)
+      el.addEventListener('transitionend', function fin(e) {
+        if (e.propertyName !== 'opacity') return;
+        el.removeEventListener('transitionend', fin);
+        el.classList.remove('reveal', 'reveal--visible');
+        el.style.transitionDelay = '';
+      });
+    });
+  }, { threshold: 0.12 });
+
+  cibles.forEach((el) => {
+    // Léger décalage entre éléments voisins (80 ms, plafonné à 400 ms)
+    const rang = Array.prototype.indexOf.call(el.parentElement.children, el);
+    el.style.transitionDelay = Math.min(rang * 80, 400) + 'ms';
+    el.classList.add('reveal');
+    observateur.observe(el);
+  });
+}
+// Après le DOMContentLoaded principal (header / footer déjà injectés)
+document.addEventListener('DOMContentLoaded', initialiserEffets);

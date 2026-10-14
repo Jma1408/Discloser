@@ -484,36 +484,60 @@ body.crt-extinction main {
   body.crt-extinction main { animation: none; }
 }
 /* ==========================================================
-   AJOUTS : footer complet, bandeau cookies, newsletter
-   (réutilisent les variables existantes)
+   EFFETS VISUELS (actifs seulement si <body class="fx">, ajoutée
+   par script.js hors connexion / pharmaceutique / secret)
    ========================================================== */
-.footer__cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; padding-bottom: 36px; margin-bottom: 30px; border-bottom: 2px solid var(--gris-moyen); }
-.footer__cols h4 { font-family: var(--police-titre); font-weight: normal; font-size: 18px; letter-spacing: .3px; margin-bottom: 12px; }
-.footer__cols a { display: block; font-size: 14px; margin-bottom: 8px; }
-.footer__cols a:hover { opacity: 1; color: var(--jaune); }
-.footer__bourse { font-size: 13px; margin: 10px 0 16px; }
-.footer__bourse strong { display: block; color: var(--vert); margin-top: 4px; }
-.newsletter label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; }
-.newsletter input { flex: 1; min-width: 0; padding: 8px 12px; font-size: 13px; border: 1px solid var(--gris-moyen); border-radius: 6px; font-family: var(--police-texte); }
-.newsletter input:focus { outline: none; border-color: var(--jaune); }
-.newsletter .btn-petit { padding: 8px 16px; }
-.newsletter small { display: block; min-height: 16px; margin-top: 6px; font-size: 12px; color: #444; }
-.footer__social { display: flex; gap: 18px; margin-bottom: 24px; font-size: 13px; font-weight: bold; color: #444; }
-.footer__adresse { margin-top: 8px; font-size: 12px; line-height: 1.6; color: #555; }
 
-.bandeau-cookies {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
-  display: flex; align-items: center; justify-content: space-between; gap: 24px;
-  padding: 18px 32px; background: var(--blanc); border-top: 4px solid var(--jaune); box-shadow: 0 -4px 14px rgba(0,0,0,.12);
-  font-size: 14px; line-height: 1.5;
-}
-.bandeau-cookies a:not(.btn-petit) { text-decoration: underline; }
-.bandeau-cookies__btns { display: flex; gap: 10px; flex-shrink: 0; }
+/* Boutons : padding élargi, flèche qui glisse, focus clavier visible */
+.fx .btn-petit { padding: 12px 34px; transition: background-color .25s, color .25s, box-shadow .25s, transform .25s, filter .25s; }
+.fx .btn-petit::after,
+.fx .btn-connexion::after,
+.fx .cta__btn::after { content: "→"; display: inline-block; margin-left: 8px; transition: transform .25s; }
+.fx .btn-petit:hover::after,
+.fx .btn-connexion:hover::after,
+.fx .cta__btn:hover::after { transform: translateX(4px); }
+.fx .btn-petit:focus-visible,
+.fx .btn-connexion:focus-visible { outline: 3px solid var(--jaune); outline-offset: 3px; }
+.fx .cta__btn:focus-visible { outline: none; filter: brightness(1.08); text-decoration: underline; }
 
-@media (max-width: 900px) {
-  .footer__cols { grid-template-columns: repeat(2, 1fr); }
-  .bandeau-cookies { flex-direction: column; align-items: flex-start; padding: 16px 18px; }
+/* Navigation : soulignement qui se dessine de gauche à droite */
+.fx .nav__l1 a, .fx .nav__l2 a {
+  background-image: linear-gradient(var(--jaune), var(--jaune));
+  background-repeat: no-repeat; background-position: 0 100%; background-size: 0 2px;
+  padding-bottom: 3px; transition: background-size .25s, color .25s;
 }
-@media (max-width: 560px) {
-  .footer__cols { grid-template-columns: 1fr; }
+.fx .nav__l1 a:hover, .fx .nav__l2 a:hover,
+.fx .nav__l1 a:focus-visible, .fx .nav__l2 a:focus-visible { background-size: 100% 2px; }
+
+/* Header collant qui se réduit au défilement (grand écran seulement) */
+@media (min-width: 901px) {
+  .fx #site-header { display: contents; }
+  .fx .header { position: sticky; top: 0; z-index: 50; transition: padding .25s, box-shadow .25s; }
+  .fx .header__logo img { transition: height .25s; }
+  .fx .header.header--reduit { padding: 6px 0; box-shadow: var(--ombre); }
+  .fx .header.header--reduit .header__logo img { height: 64px; }
+}
+
+/* Apparition au défilement : "translate" (pas "transform"), pour ne pas
+   entrer en conflit avec les survols. Classes retirées après l'animation. */
+.fx .reveal { opacity: 0; translate: 0 18px; transition: opacity .5s ease, translate .5s ease; }
+.fx .reveal.reveal--visible { opacity: 1; translate: 0 0; }
+
+/* Survols : légère élévation, zoom lent sur la photo d'accueil */
+.fx .chiffre, .fx .encadre { transition: transform .25s, box-shadow .25s; }
+.fx .chiffre:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,.12); }
+.fx .encadre:hover { transform: translateY(-3px); box-shadow: var(--ombre); }
+.fx .main__img img { transition: transform .8s ease; }
+.fx .main__img:hover img { transform: scale(1.03); }
+
+/* Titre d'accueil : fondu au chargement */
+@keyframes fx-fondu { from { opacity: 0; translate: 0 10px; } to { opacity: 1; translate: 0 0; } }
+.fx .hero { animation: fx-fondu .8s ease both; }
+
+/* Mouvement réduit : aucune animation */
+@media (prefers-reduced-motion: reduce) {
+  body.fx *, body.fx *::after { transition: none !important; animation: none !important; }
+  .fx .reveal { opacity: 1; translate: none; }
+  .fx .main__img:hover img, .fx .chiffre:hover, .fx .encadre:hover,
+  .fx .btn-petit:hover::after, .fx .btn-connexion:hover::after, .fx .cta__btn:hover::after { transform: none; }
 }
