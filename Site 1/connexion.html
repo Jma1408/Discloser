@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connexion - PICKAXE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="">
+
+  <div id="site-header"></div>
+
+  <main class="page">
+    <nav class="fil" aria-label="Fil d'Ariane">
+      <a href="index.html">Accueil</a><span class="sep-fil">›</span>Connexion
+    </nav>
+
+    <h1 class="page-titre">Connexion</h1>
+    <div class="page-barre"></div>
+    <p class="page-intro">Accédez à votre espace personnel Pickaxe.</p>
+
+    <section class="bloc">
+      <!-- Formulaire géré par script.js (constante MOT_DE_PASSE_CONNEXION) -->
+      <form class="form-connexion" id="form-connexion" autocomplete="off" novalidate>
+        <label for="champ-mdp">Mot de passe</label>
+        <input type="password" id="champ-mdp" name="champ-mdp" placeholder="Saisissez votre mot de passe" required>
+
+        <button type="submit" class="btn-petit">Se connecter</button>
+
+        <div class="msg-erreur" id="msg-connexion" aria-live="polite"></div>
+      </form>
+    </section>
+  </main>
+
+  <!-- Pop-up de succès (cachée par défaut, affichée par script.js) -->
+  <div id="modale-succes" class="modale-overlay" hidden>
+    <div class="modale-boite" role="dialog" aria-modal="true"
+         aria-labelledby="modale-titre" aria-describedby="modale-texte">
+      <div class="modale-icone" aria-hidden="true">
+        <svg viewBox="0 0 48 48" focusable="false">
+          <circle cx="24" cy="24" r="20"></circle>
+          <path d="m14 24 7 7 14-15"></path>
+        </svg>
+      </div>
+      <h2 id="modale-titre">Connexion réussie</h2>
+      <p id="modale-texte">Vous êtes maintenant connecté à votre espace Pickaxe.</p>
+      <button type="button" id="modale-continuer" class="modale-btn">Continuer</button>
+    </div>
+  </div>
+
+  <div id="site-footer"></div>
+  <script src="script.js"></script>
+</body>
+</html>
