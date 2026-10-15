@@ -1,0 +1,146 @@
+/* ==========================================================
+   LinkedYne - faux réseau professionnel (ARG DisCloser)
+   ========================================================== */
+
+:root {
+  --vert: #0f766e;
+  --vert-fonce: #115e59;
+  --fond: #eef0ee;
+  --carte: #ffffff;
+  --texte: #1f2937;
+  --gris: #6b7280;
+  --bord: #dfe3e0;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--fond);
+  color: var(--texte);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+/* ---------- Barre de navigation ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--carte);
+  border-bottom: 1px solid var(--bord);
+}
+.topbar__inner {
+  max-width: 1000px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 8px 16px;
+}
+.topbar__logo { display: block; height: 32px; width: auto; }
+.topbar__nav { display: flex; align-items: center; gap: 4px; }
+.nav-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 4px 12px;
+  font-size: 12px; color: var(--gris);
+  border-radius: 6px;
+  transition: color .15s, background .15s;
+}
+.nav-btn:hover { color: var(--texte); background: #f3f4f3; }
+.nav-btn svg { width: 22px; height: 22px; }
+.nav-btn--cta {
+  flex-direction: row;
+  margin-left: 8px; padding: 8px 18px;
+  font-size: 14px; font-weight: 700;
+  color: var(--vert); border: 1.5px solid var(--vert); border-radius: 999px;
+}
+.nav-btn--cta:hover { background: #e6f2f0; color: var(--vert-fonce); }
+
+/* ---------- Colonne centrale ---------- */
+.page {
+  max-width: 760px; margin: 24px auto 48px;
+  padding: 0 16px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.carte {
+  background: var(--carte);
+  border: 1px solid var(--bord);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.carte__corps { padding: 20px 24px; }
+.carte h2 { font-size: 19px; margin-bottom: 12px; }
+
+/* ---------- En-tête du profil ---------- */
+.banniere { height: 150px; background: #5b6b66; }
+.profil { position: relative; padding: 0 24px 22px; }
+.profil__photo {
+  width: 132px; height: 132px; margin-top: -70px;
+  border-radius: 50%; border: 4px solid var(--carte);
+  background: #9aa8a3; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 56px; font-weight: 700;
+}
+.profil__nom { font-size: 25px; margin-top: 10px; }
+.profil__titre { font-size: 16px; margin-top: 2px; }
+.profil__meta { font-size: 14px; color: var(--gris); margin-top: 6px; }
+.profil__relations { font-size: 14px; color: var(--vert); font-weight: 700; margin-top: 4px; }
+
+/* ---------- Infos ---------- */
+.infos p + p { margin-top: 10px; }
+
+/* ---------- Expérience ---------- */
+.experience { display: flex; gap: 14px; }
+.experience__logo {
+  flex-shrink: 0;
+  width: 48px; height: 48px; border-radius: 6px;
+  background: #f5c400; color: #111;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 20px;
+}
+.experience__poste { font-weight: 700; }
+.experience__entreprise { color: var(--texte); font-size: 14px; }
+.experience__entreprise a { color: var(--vert); font-weight: 700; text-decoration: none; }
+.experience__entreprise a:hover { text-decoration: underline; }
+.experience__dates { color: var(--gris); font-size: 13px; margin-top: 2px; }
+.experience__desc { margin-top: 8px; font-size: 14px; }
+
+/* ---------- Posts ---------- */
+.post + .post { border-top: 1px solid var(--bord); margin-top: 16px; padding-top: 16px; }
+.post__tete { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.post__avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: #9aa8a3; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+}
+.post__auteur { font-weight: 700; font-size: 14px; }
+.post__date { color: var(--gris); font-size: 12px; }
+.post__texte { font-size: 14.5px; }
+.post__reactions { color: var(--gris); font-size: 12px; margin-top: 8px; }
+
+/* ---------- Message temporaire ---------- */
+.toast {
+  position: fixed; left: 50%; bottom: 24px;
+  transform: translate(-50%, 16px);
+  background: #1f2937; color: #fff;
+  font-size: 14px; padding: 10px 18px; border-radius: 8px;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s, transform .2s;
+  z-index: 50;
+}
+.toast.visible { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- Mobile ---------- */
+@media (max-width: 640px) {
+  .topbar__inner { padding: 6px 10px; gap: 8px; }
+  .topbar__logo { height: 26px; }
+  .nav-btn { padding: 4px 6px; }
+  .nav-btn span { display: none; }
+  .nav-btn--cta { margin-left: 2px; padding: 6px 12px; }
+  .nav-btn--cta span { display: inline; font-size: 12px; }
+  .page { margin-top: 12px; padding: 0 10px; }
+  .banniere { height: 96px; }
+  .profil { padding: 0 16px 18px; }
+  .profil__photo { width: 96px; height: 96px; margin-top: -50px; font-size: 40px; }
+  .profil__nom { font-size: 21px; }
+  .carte__corps { padding: 16px; }
+}

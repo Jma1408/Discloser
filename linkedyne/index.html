@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Seb [NOM] | LinkedYne</title>
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ====== BARRE DE NAVIGATION (boutons inactifs) ====== -->
+  <header class="topbar">
+    <div class="topbar__inner">
+      <img class="topbar__logo" src="logo.svg" alt="LinkedYne">
+      <nav class="topbar__nav" aria-label="Navigation">
+        <button type="button" class="nav-btn" data-indispo>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 11h3v9h5v-6h4v6h5v-9h3z" fill="currentColor"/></svg>
+          <span>Accueil</span>
+        </button>
+        <button type="button" class="nav-btn" data-indispo>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3.5" fill="currentColor"/><circle cx="17" cy="9" r="3" fill="currentColor"/><path d="M1.5 20c.6-4 3.4-6 6.5-6s5.9 2 6.5 6zM14.5 20c-.2-1.8-.9-3.3-1.9-4.4 1.2-.8 2.7-1.1 4.4-1.1 2.8 0 5 1.8 5.5 5.5z" fill="currentColor"/></svg>
+          <span>Réseau</span>
+        </button>
+        <button type="button" class="nav-btn" data-indispo>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2z" fill="currentColor"/></svg>
+          <span>Messagerie</span>
+        </button>
+        <button type="button" class="nav-btn nav-btn--cta" data-indispo>
+          <span>Se connecter</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+
+    <!-- ====== EN-TÊTE DU PROFIL ====== -->
+    <section class="carte">
+      <div class="banniere"></div>
+      <div class="profil">
+        <div class="profil__photo" aria-hidden="true">S</div>
+        <h1 class="profil__nom">Seb [NOM]</h1>
+        <p class="profil__titre">[POSTE]</p>
+        <p class="profil__meta">Valmont-sur-Lorne, France</p>
+        <p class="profil__relations">500+ relations</p>
+      </div>
+    </section>
+
+    <!-- ====== INFOS ====== -->
+    <section class="carte infos">
+      <div class="carte__corps">
+        <h2>Infos</h2>
+        <p>J'ai donné des années à une entreprise qui m'a remercié en une après-midi. On m'a demandé de signer, de rendre mon badge et d'oublier ce que j'avais vu.</p>
+        <p>Je n'ai rien oublié. Ceux qui veulent comprendre n'ont qu'à commencer là où j'ai travaillé.</p>
+      </div>
+    </section>
+
+    <!-- ====== EXPÉRIENCE ====== -->
+    <section class="carte">
+      <div class="carte__corps">
+        <h2>Expérience</h2>
+        <div class="experience">
+          <div class="experience__logo" aria-hidden="true">P</div>
+          <div>
+            <p class="experience__poste">[POSTE]</p>
+            <p class="experience__entreprise"><a href="../Site%201/index.html">PICKAXE</a> · Temps plein</p>
+            <p class="experience__dates">sept. 2003 - mars 2010</p>
+            <p class="experience__desc">Recherche et développement. Je ne suis plus autorisé à en dire davantage.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== ACTIVITÉ ====== -->
+    <section class="carte">
+      <div class="carte__corps">
+        <h2>Activité</h2>
+
+        <article class="post">
+          <div class="post__tete">
+            <div class="post__avatar" aria-hidden="true">S</div>
+            <div>
+              <p class="post__auteur">Seb [NOM]</p>
+              <p class="post__date">avril 2010</p>
+            </div>
+          </div>
+          <p class="post__texte">Licencié après sept ans. Officiellement, une « réorganisation ». Officieusement, j'ai posé une question de trop.</p>
+          <p class="post__reactions">12 réactions · 3 commentaires</p>
+        </article>
+
+        <article class="post">
+          <div class="post__tete">
+            <div class="post__avatar" aria-hidden="true">S</div>
+            <div>
+              <p class="post__auteur">Seb [NOM]</p>
+              <p class="post__date">mai 2010</p>
+            </div>
+          </div>
+          <p class="post__texte">On me demande souvent pourquoi je ne retrouve pas de poste. Peut-être parce que certains noms ouvrent toutes les portes, et que d'autres les ferment.</p>
+          <p class="post__reactions">5 réactions</p>
+        </article>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    // Boutons de la barre : inactifs, petit message au clic
+    (function () {
+      var toast = document.getElementById('toast');
+      var timer = null;
+      document.querySelectorAll('[data-indispo]').forEach(function (bouton) {
+        bouton.addEventListener('click', function () {
+          toast.textContent = 'Fonction indisponible';
+          toast.classList.add('visible');
+          clearTimeout(timer);
+          timer = setTimeout(function () { toast.classList.remove('visible'); }, 2200);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
