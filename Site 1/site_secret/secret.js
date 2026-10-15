@@ -836,7 +836,7 @@ window.addEventListener('pageshow', function (event) {
           </div>
         </div>
         <div class="lab-video" id="lab-video" hidden>
-          <video id="lab-video-lecteur" controls preload="metadata" playsinline></video>
+          <video id="lab-video-lecteur" controls muted preload="metadata" playsinline></video>
         </div>
       </div>
 
@@ -1036,7 +1036,15 @@ window.addEventListener('pageshow', function (event) {
     function ouvrirVideo(animation) {
       coffre.classList.add('ok');
       etat.textContent = 'ACCÈS AUTORISÉ';
-      if (!lecteur.getAttribute('src')) lecteur.src = 'donnees/donnees_video.mp4';
+      if (!lecteur.getAttribute('src')) {
+        lecteur.onerror = () => {
+          const p = document.createElement('div');
+          p.className = 'terminal-camera__placeholder';
+          p.textContent = 'ERREUR – lecture impossible : donnees/donnees_video.mp4';
+          lecteur.replaceWith(p);
+        };
+        lecteur.src = 'donnees/donnees_video.mp4';
+      }
       const montrer = () => { coffre.hidden = true; zoneVideo.hidden = false; };
       if (animation) setTimeout(montrer, 1200); else montrer();
     }
@@ -2141,6 +2149,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       } else if (camera.disponible) {
         video = document.createElement('video');
         video.className = 'terminal-video';
+        video.preload = 'metadata';
         video.src = camera.video;
         video.autoplay = true;
         video.muted = true;
@@ -2173,7 +2182,9 @@ Plus d'informations lors de la prochaine réunion de coordination.`
         });
 
         video.onerror = () => {
-          video.replaceWith(placeholder());
+          const p = placeholder();
+          p.textContent = `SIGNAL PERDU – impossible de charger ${camera.video}`;
+          video.replaceWith(p);
           compteur.remove();
           son.remove();
         };
@@ -2194,7 +2205,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       tic();
 
       contenu.appendChild(cadre);
-      if (video) video.play().catch(() => {});
+      if (video) video.play().catch(() => { video.controls = true; });
     },
 
     /* ---------- Décryptage des documents (Cmd/Ctrl+Shift+X) ---------- */
