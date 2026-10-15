@@ -703,10 +703,6 @@ html.pkx-sortie body { opacity: 0; transition: opacity .25s ease; }
 
 .encadre--engagement { font-size: 17px; line-height: 1.8; }
 
-.fiche-lot { width: 100%; max-width: 640px; border-collapse: collapse; margin-top: 18px; font-size: 13px; }
-.fiche-lot th, .fiche-lot td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--gris-clair); font-weight: normal; }
-.fiche-lot th { width: 42%; color: #666; }
-.fiche-lot td { font-family: "Courier New", Courier, monospace; color: #222; word-break: break-word; }
 
 @media (max-width: 900px) {
   .sites-recherche { grid-template-columns: repeat(2, 1fr); }
@@ -732,4 +728,78 @@ html.pkx-sortie body { opacity: 0; transition: opacity .25s ease; }
   html.pkx-entree body, .pkx-chargement__barre i, .fx .page-barre, .fx .bloc__barre,
   .molecule, .molecule__atomes circle, .pipeline__barre::after { animation: none !important; }
   .fx .carte:hover, .fx .btn-petit:hover, .fx .btn-connexion:hover, .fx .cta__btn:hover { transform: none; }
+}
+
+/* =====================================================================
+   BOUTONS SOBRES (tout le site) : rectangle, coins 5 px, majuscules
+   espacées, flèche discrète. Remplace l'octogone et les pilules.
+   ===================================================================== */
+.cta__btn, .fx .cta__btn,
+.btn-petit, .fx .btn-petit,
+.btn-connexion, .fx .btn-connexion,
+.assistance__bouton, .fx .assistance__bouton {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  clip-path: none; border-radius: 5px; box-shadow: none; filter: none; transform: none;
+  font-family: var(--police-texte); font-weight: bold; font-size: 12px; line-height: 1.2;
+  text-transform: uppercase; letter-spacing: .14em; text-align: center;
+  transition: background-color .2s, color .2s, border-color .2s;
+}
+/* Bouton principal : fond plein */
+.btn-petit, .fx .btn-petit, .cta__btn--jaune, .fx .cta__btn--jaune,
+.assistance__bouton, .fx .assistance__bouton {
+  background: var(--jaune); color: var(--blanc); border: 1px solid var(--jaune); padding: 0 26px; height: 46px;
+}
+/* Boutons secondaires : contour fin */
+.cta__btn--gris, .fx .cta__btn--gris, .btn-connexion, .fx .btn-connexion, .btn-petit--gris, .fx .btn-petit--gris {
+  background: transparent; color: var(--noir); border: 1px solid var(--noir);
+}
+.btn-connexion, .fx .btn-connexion { height: 44px; padding: 0 20px; }
+/* Accueil : 4 boutons de même taille */
+.cta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.cta__btn, .fx .cta__btn { width: 100%; max-width: none; height: 56px; padding: 0 18px; }
+.cta__btn, .fx .cta__btn { line-height: 1.35; } /* texte sur 2 lignes (balise <br> d'origine) */
+
+/* Survol, clic, focus : sans ombre lourde ni déplacement */
+.btn-petit:hover, .fx .btn-petit:hover, .cta__btn--jaune:hover, .fx .cta__btn--jaune:hover,
+.assistance__bouton:hover, .fx .assistance__bouton:hover { background: var(--jaune-clair); border-color: var(--jaune-clair); transform: none; box-shadow: none; filter: none; }
+.cta__btn--gris:hover, .fx .cta__btn--gris:hover, .btn-connexion:hover, .fx .btn-connexion:hover,
+.btn-petit--gris:hover, .fx .btn-petit--gris:hover { background: var(--noir); color: var(--blanc); border-color: var(--noir); transform: none; box-shadow: none; filter: none; }
+.btn-connexion:hover svg { stroke: var(--blanc); }
+.fx .btn-petit:active, .fx .btn-connexion:active, .fx .cta__btn:active, .fx .assistance__bouton:active { transform: none; box-shadow: none; filter: brightness(.95); }
+.cta__btn:focus-visible, .fx .cta__btn:focus-visible, .btn-petit:focus-visible, .btn-connexion:focus-visible,
+.assistance__bouton:focus-visible { outline: 2px solid var(--jaune); outline-offset: 3px; text-decoration: none; filter: none; }
+
+/* Flèche discrète qui glisse de 4 px */
+.fx .btn-petit::after, .fx .btn-connexion::after, .fx .cta__btn::after { content: "→"; margin-left: 0; font-weight: normal; transition: transform .2s ease; }
+.fx .btn-petit:hover::after, .fx .btn-connexion:hover::after, .fx .cta__btn:hover::after { transform: translateX(4px); }
+
+@media (max-width: 900px) { .cta { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .cta { grid-template-columns: 1fr; } }
+
+/* =====================================================================
+   PAGE PHARMACEUTIQUE (version allégée) : fiche de lot mise en valeur
+   ===================================================================== */
+.pharma-chiffres { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 900px) { .pharma-chiffres { grid-template-columns: 1fr; } }
+.fiche-lot-bloc { border-top: none !important; }
+.fiche-lot {
+  display: block; width: auto; max-width: 720px; margin: 0; font-size: 14px;
+  background: var(--blanc); border: 1px solid var(--gris-clair); border-left: 3px solid var(--jaune);
+  padding: 22px 28px 24px;
+}
+.fiche-lot__etiquette {
+  display: inline-block; margin-bottom: 10px;
+  font-size: 10px; font-weight: bold; letter-spacing: .18em; text-transform: uppercase; color: #666;
+}
+.fiche-lot__phrase { font-style: italic; color: #333; margin: 0 0 18px; }
+.fiche-lot__champs { display: grid; grid-template-columns: 200px 1fr; gap: 8px 18px; margin: 0; }
+.fiche-lot__champs dt { color: #666; }
+.fiche-lot__champs dd { margin: 0; font-family: "Courier New", Courier, monospace; color: #222; }
+.fiche-lot__sequence { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--gris-clair); }
+.fiche-lot__libelle { display: block; color: #666; margin-bottom: 6px; }
+#message-code { font-family: "Courier New", Courier, monospace; font-size: 1.2em; letter-spacing: .04em; color: #222; word-break: break-word; }
+@media (max-width: 600px) {
+  .fiche-lot { padding: 18px; }
+  .fiche-lot__champs { grid-template-columns: 1fr; gap: 2px; }
+  .fiche-lot__champs dd { margin-bottom: 8px; }
 }
