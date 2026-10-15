@@ -27,10 +27,9 @@ const TEXTE_FIN_MAIL = "[SCRIPT / CODE À INSÉRER ICI]";
 
 // Pièces jointes du mail principal
 // Document : s'affiche dans la messagerie (fenêtre superposée #doc-seb).
-// Vidéo : remplacer par l'URL complète (https://…) quand elle sera en ligne ;
-// tant qu'elle commence par "[", un message s'affiche à la place.
+// Vidéo : lien YouTube, ouvert dans un nouvel onglet.
 const LIEN_PIECE_JOINTE_PDF = "#doc-seb";
-const LIEN_PIECE_JOINTE_VIDEO = "[LIEN YOUTUBE]";
+const LIEN_PIECE_JOINTE_VIDEO = "https://youtu.be/dvpYCm5TqfE";
 
 // Clés de sauvegarde dans le localStorage
 const CLE_STOCKAGE = "arg_mail_etat_lu_v1";      // état lu / non lu
@@ -610,9 +609,6 @@ elLecteur.addEventListener("click", (e) => {
     if (pj.dataset.type === "pdf") {          // document : fenêtre superposée
       e.preventDefault();
       ouvrirDocument();
-    } else if (!/^https?:\/\//.test(lien)) {   // vidéo pas encore en ligne
-      e.preventDefault();
-      afficherToast("Vidéo en cours de mise en ligne");
     }
     return;
   }
