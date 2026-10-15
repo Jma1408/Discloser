@@ -3,6 +3,31 @@
    Vanilla JS, aucun framework.
    ========================================================== */
 
+/* ---------- INDICES ANTI-BLOCAGE (mails de l'Anonyme) ----------
+   Une ligne par étape, dans l'ordre du jeu. Le délai d'une étape démarre
+   quand l'étape précédente est franchie (ou à l'ouverture de la boîte mail
+   pour la première). Un indice part une seule fois, jamais si l'étape est
+   déjà franchie, jamais s'il est inactif (actif: false).
+   page : page qui appelle marquer(etape) (pour mémoire)
+   Pour ajouter une étape (vidéo, LinkedYne…) : ajouter une ligne ici
+   et un appel marquer(n) dans la page concernée. */
+const DEBUG_INDICES = false; // true : délais divisés par 60 (5 min -> 5 s)
+const ETAPE_FIN_ARG = 6;     // fin provisoire de l'ARG (plus de confirmation de fermeture)
+const INDICES = [
+  { etape: 1, page: "Site 1/index.html", delaiMin: 5, objet: "Avez-vous commencé ?",
+    texte: "Un ancien employé ne parle jamais sans raison. Ce qu'il a laissé derrière lui mène quelque part, suivez-le jusqu'à l'entreprise.\n\n— A." },
+  { etape: 2, page: "Site 1/pharmaceutique.html", delaiMin: 5, objet: "Regardez plus loin",
+    texte: "Pickaxe n'affiche pas tout sur sa vitrine. Ses nouvelles activités, celles dont je vous parlais, se cachent du côté de l'innovation.\n\n— A." },
+  { etape: 3, page: "Site 1/site_secret/secret.html (connexion)", delaiMin: 7, objet: "Le message",
+    texte: "Leur page de recherche contient un message qui ne s'adresse pas à des humains. Souvenez-vous de l'avertissement sur le langage codé.\n\n— A." },
+  { etape: 4, page: "secret.js (terminal ouvert)", delaiMin: 7, objet: "Le laboratoire", actif: false,
+    texte: "Leur laboratoire en montre plus qu'il n'en dit. Regardez chaque photo : certains détails n'ont rien à faire sur ces murs.\n\n— A." },
+  { etape: 5, page: "secret.js (décryptage)", delaiMin: 7, objet: "Ce qui reste caché",
+    texte: "Il manque encore des documents. Ce terminal a ses propres règles : demandez-lui de l'aide, il finira par tout vous montrer.\n\n— A." },
+  { etape: 6, page: "secret.js (Données déverrouillé)", delaiMin: 10, objet: "Les caméras",
+    texte: "Leurs caméras ont tout enregistré, y compris ce qu'ils voulaient cacher. Un planning incomplet, une réunion… regardez de près ce qui est affiché au mur.\n\n— A." }
+];
+
 /* ---------- CONSTANTES FACILES À MODIFIER ---------- */
 
 // Texte affiché dans le bloc de fin du mail principal (#script-fin-mail)
@@ -57,6 +82,8 @@ J'ai rassemblé les premières informations que j'ai pu trouver dans un document
 Je préfère ne pas vous orienter vers une conclusion particulière. Je souhaite simplement comprendre ce qui se passe réellement. Si cette vidéo est aussi anodine qu'elle en a l'air, nous le saurons rapidement. Mais si certains éléments sont fondés, je préfère ne pas laisser passer ça.
 
 Vous trouverez les deux pièces jointes nécessaires pour commencer. Tenez-moi au courant de vos premières découvertes dès que possible.
+
+Gardez cette fenêtre ouverte. Je vous écrirai ici.
 
 Cordialement,`,
     date: ilYaHeures(0.4), // aujourd'hui, quelques minutes avant 9h22
@@ -282,6 +309,8 @@ function resetMails() {
   try {
     [CLE_STOCKAGE, CLE_ARCHIVES, CLE_REGLAGES].forEach((cle) => localStorage.removeItem(cle));
   } catch (e) { /* ignoré */ }
+  if (window.ProgressionARG) ProgressionARG.reinitialiser(); // progression + indices
+  window.removeEventListener("beforeunload", confirmerFermeture);
   location.reload();
 }
 window.resetMails = resetMails;
@@ -353,6 +382,8 @@ function majCompteur() {
   const n = MAILS.filter((m) => !m.lu && !archives.has(m.id)).length;
   elCompteur.textContent = n;
   elCompteur.classList.toggle("zero", n === 0);
+  // Titre de l'onglet : attire l'œil depuis les autres onglets
+  document.title = n > 0 ? "(" + n + ") Messagerie" : "Messagerie";
 }
 
 /* ---------- AFFICHAGE DE LA LISTE ---------- */
@@ -629,13 +660,86 @@ elBoite.addEventListener("keydown", (e) => {
   if (e.key === "Enter" || e.key === " ") { e.preventDefault(); afficherTout(); }
 });
 
+/* ---------- INDICES ANTI-BLOCAGE ---------- */
+const ID_INDICE = 1000; // id des mails d'indice = 1000 + étape
+
+// Crée le mail d'un indice (non lu par défaut)
+function mailIndice(indice, date) {
+  return {
+    id: ID_INDICE + indice.etape,
+    expediteur: "Anonyme",
+    adresse: "contact.anonyme@protonmail.com",
+    objet: indice.objet,
+    apercu: indice.texte.split("\n")[0],
+    corps: indice.texte,
+    date: new Date(date),
+    lu: false,
+    pieces_jointes: []
+  };
+}
+
+// Indices déjà reçus lors d'une visite précédente
+function restaurerIndices() {
+  if (!window.etat) return;
+  const envoyes = etat().indices;
+  INDICES.forEach((ind) => {
+    if (envoyes[ind.etape] && !MAILS.some((m) => m.id === ID_INDICE + ind.etape)) {
+      MAILS.push(mailIndice(ind, envoyes[ind.etape]));
+    }
+  });
+}
+
+// Envoie les indices dont le délai est dépassé
+function verifierIndices() {
+  if (!window.etat) return;
+  const e = etat();
+  const maintenant = Date.now();
+  let nouveaux = 0;
+
+  INDICES.forEach((ind, i) => {
+    if (ind.actif === false || e.etapes[ind.etape] || e.indices[ind.etape]) return;
+    // Le délai démarre au franchissement de l'étape précédente (ou au début de l'ARG)
+    const depart = i === 0 ? e.debut : e.etapes[INDICES[i - 1].etape];
+    if (!depart) return;
+    const delai = ind.delaiMin * 60000 / (DEBUG_INDICES ? 60 : 1);
+    if (maintenant - depart < delai) return;
+
+    ProgressionARG.noterIndice(ind.etape);
+    MAILS.push(mailIndice(ind, maintenant));
+    nouveaux++;
+  });
+
+  if (nouveaux > 0) {
+    majCompteur();
+    afficherListe();
+    afficherToast(nouveaux > 1 ? nouveaux + " nouveaux messages" : "Nouveau message");
+  }
+}
+
+// Confirmation de fermeture tant que l'ARG n'est pas terminé
+function confirmerFermeture(e) {
+  if (window.etat && etat().etapes[ETAPE_FIN_ARG]) return;
+  e.preventDefault();
+  e.returnValue = "";
+}
+window.addEventListener("beforeunload", confirmerFermeture);
+
+// Vérification toutes les 10 s et dès qu'un autre onglet modifie la progression
+setInterval(verifierIndices, 10000);
+window.addEventListener("storage", (e) => {
+  if (window.ProgressionARG && e.key === ProgressionARG.cle) verifierIndices();
+});
+
 /* ---------- BOUTON CACHÉ DE RESET (tests) ---------- */
 $("btn-reset").addEventListener("click", resetMails);
 
 /* ---------- INITIALISATION ---------- */
+if (window.ProgressionARG) ProgressionARG.demarrer(); // début de l'ARG
+restaurerIndices(); // indices déjà reçus
 chargerEtat();      // récupère l'état lu/non lu sauvegardé
 chargerArchives();  // mails archivés
 chargerReglages();  // thème, densité, tri, colonne
 appliquerReglages();
 majCompteur();      // compteur de non lus
 afficherListe();    // affiche la liste (aucun mail n'est ouvert automatiquement)
+verifierIndices();  // indices en retard : arrivent tout de suite
