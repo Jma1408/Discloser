@@ -583,7 +583,7 @@ window.addEventListener('pageshow', function (event) {
   const GALERIE = {
     total: 100,
     chemin: n => `labo/photo${String(n).padStart(3, '0')}.jpg`,
-    disponibles: Array.from({ length: 30 }, (_, i) => i + 1) // photos 1 à 30
+    disponibles: Array.from({ length: 35 }, (_, i) => i + 1) // photos 1 à 35
   };
   let currentPhotoIndex = 0;
   const totalPhotos = GALERIE.total;
