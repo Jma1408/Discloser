@@ -1389,7 +1389,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
      requête, donc aucune erreur dans la console).
      locked: true = flux verrouillé (ACCESS DENIED), comme dans le document Caméras. */
   const CAMERAS = {
-    '001': { video: 'videos/camera001.mp4', disponible: false },
+    '001': { video: 'videos/camera001.mp4', disponible: true },
     '002': { video: 'videos/camera002.mp4', disponible: false, locked: true },
     '003': { video: 'videos/camera003.mp4', disponible: false },
     '004': { video: 'videos/camera004.mp4', disponible: false },
@@ -1485,6 +1485,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       });
 
       closeBtn.addEventListener('click', () => {
+        this.fermerMur();
         overlay.classList.remove('visible');
         input.value = '';
         input.blur();
@@ -1663,9 +1664,120 @@ Plus d'informations lors de la prochaine réunion de coordination.`
         return;
       }
       await this.barre('Liaison', 100, 700);
+      this.ouvrirMur(id);
+      await this.type(`Flux CAM-${id} ouvert.`, 'success');
+      this.log('');
+    },
+
+    /* ---------- Mur de surveillance (/cameras) : piloté par CAMERAS ---------- */
+    mur: null,
+    murMinuteur: null,
+
+    ouvrirMur: function(idSeul) {
+      if (!this.mur) {
+        const mur = document.createElement('div');
+        mur.className = 'terminal-mur';
+        mur.innerHTML = `
+          <div class="terminal-mur__barre">
+            <button type="button" class="terminal-mur__retour" hidden>← Mur</button>
+            <span class="terminal-mur__titre">MUR DE SURVEILLANCE</span>
+            <button type="button" class="terminal-mur__fermer" aria-label="Fermer">✕</button>
+          </div>
+          <div class="terminal-mur__contenu"></div>`;
+        $('#terminal-overlay .terminal-window').appendChild(mur);
+        mur.querySelector('.terminal-mur__fermer').addEventListener('click', () => this.fermerMur());
+        mur.querySelector('.terminal-mur__retour').addEventListener('click', () => this.afficherGrille());
+        this.mur = mur;
+      }
+      this.mur.hidden = false;
+      if (idSeul) this.afficherCamera(idSeul);
+      else this.afficherGrille();
+    },
+
+    /** Ferme le mur ; renvoie true s'il était ouvert */
+    fermerMur: function() {
+      if (!this.mur || this.mur.hidden) return false;
+      this.viderMur();
+      this.mur.hidden = true;
+      const input = $('#terminal-input');
+      if (input && $('#terminal-overlay').classList.contains('visible')) input.focus();
+      return true;
+    },
+
+    /** Vide le contenu du mur et coupe les vidéos en cours */
+    viderMur: function() {
+      const contenu = this.mur.querySelector('.terminal-mur__contenu');
+      contenu.querySelectorAll('video').forEach((v) => {
+        v.pause();
+        v.removeAttribute('src');
+        v.load();
+      });
+      contenu.innerHTML = '';
+      clearInterval(this.murMinuteur);
+      return contenu;
+    },
+
+    afficherGrille: function() {
+      const contenu = this.viderMur();
+      this.mur.querySelector('.terminal-mur__titre').textContent = 'MUR DE SURVEILLANCE';
+      this.mur.querySelector('.terminal-mur__retour').hidden = true;
+
+      const grille = document.createElement('div');
+      grille.className = 'terminal-mur__grille';
+      Object.keys(CAMERAS).forEach((id) => {
+        const cam = CAMERAS[id];
+        const etat = cam.locked ? 'verrouille' : (cam.disponible ? 'en-ligne' : 'hors-ligne');
+        const statut = cam.locked ? 'VERROUILLÉ' : (cam.disponible ? 'EN LIGNE' : 'HORS LIGNE');
+        const caseCam = document.createElement(cam.locked ? 'div' : 'button');
+        if (!cam.locked) caseCam.type = 'button';
+        caseCam.className = `terminal-mur__case terminal-mur__case--${etat}`;
+        caseCam.innerHTML = `
+          <span class="terminal-mur__apercu"></span>
+          <span class="terminal-mur__nom">CAM ${id}</span>
+          <span class="terminal-mur__statut">${statut}</span>`;
+        const apercu = caseCam.querySelector('.terminal-mur__apercu');
+        const bruit = (texte) => {
+          apercu.dataset.signal = texte;
+          caseCam.classList.add('terminal-mur__case--bruit');
+        };
+
+        if (cam.disponible && !cam.locked) {
+          // Première image en aperçu
+          const v = document.createElement('video');
+          v.muted = true;
+          v.playsInline = true;
+          v.preload = 'metadata';
+          v.src = cam.video + '#t=0.1';
+          v.onerror = () => { v.remove(); bruit('SIGNAL ABSENT'); };
+          apercu.appendChild(v);
+        } else {
+          bruit(cam.locked ? 'ACCÈS RESTREINT' : 'SIGNAL ABSENT');
+        }
+
+        if (cam.locked) {
+          caseCam.setAttribute('aria-disabled', 'true');
+          caseCam.addEventListener('click', () => {
+            caseCam.classList.remove('refus');
+            void caseCam.offsetWidth; // relance l'animation de refus
+            caseCam.classList.add('refus');
+          });
+        } else {
+          caseCam.addEventListener('click', () => this.afficherCamera(id));
+        }
+        grille.appendChild(caseCam);
+      });
+      contenu.appendChild(grille);
+    },
+
+    /** Une caméra en grand : REC, horodatage, scanlines, compteur de lecture */
+    afficherCamera: function(id) {
+      const camera = CAMERAS[id];
+      const contenu = this.viderMur();
+      this.mur.querySelector('.terminal-mur__titre').textContent = `CAM ${id}`;
+      this.mur.querySelector('.terminal-mur__retour').hidden = false;
 
       const cadre = document.createElement('div');
-      cadre.className = 'terminal-camera';
+      cadre.className = 'terminal-camera terminal-camera--grand';
       cadre.innerHTML = `
         <div class="terminal-camera__titre"><span>CAMÉRA ${id}</span><span class="terminal-camera__rec">● REC</span></div>
         <div class="terminal-camera__ecran"><span class="terminal-camera__horloge"></span></div>`;
@@ -1677,35 +1789,64 @@ Plus d'informations lors de la prochaine réunion de coordination.`
         return p;
       };
 
+      let video = null;
       if (camera.disponible) {
-        const video = document.createElement('video');
+        video = document.createElement('video');
         video.className = 'terminal-video';
         video.src = camera.video;
-        video.controls = true;
         video.autoplay = true;
         video.muted = true;
         video.loop = true;
-        video.onerror = () => video.replaceWith(placeholder());
+        video.playsInline = true;
+
+        // Compteur de visionnage « 00:00:07 / 00:00:17 »
+        const compteur = document.createElement('span');
+        compteur.className = 'terminal-camera__compteur';
+        const hms = (s) => {
+          s = Math.floor(s || 0);
+          const p2 = (n) => String(n).padStart(2, '0');
+          return `${p2(Math.floor(s / 3600))}:${p2(Math.floor(s / 60) % 60)}:${p2(s % 60)}`;
+        };
+        const majCompteur = () => {
+          compteur.textContent = `${hms(video.currentTime)} / ${hms(video.duration)}`;
+        };
+        video.addEventListener('timeupdate', majCompteur);
+        video.addEventListener('loadedmetadata', majCompteur);
+        majCompteur();
+
+        // Bouton son (lecture muette par défaut)
+        const son = document.createElement('button');
+        son.type = 'button';
+        son.className = 'terminal-camera__son';
+        son.textContent = '🔇 SON';
+        son.addEventListener('click', () => {
+          video.muted = !video.muted;
+          son.textContent = video.muted ? '🔇 SON' : '🔊 SON';
+        });
+
+        video.onerror = () => {
+          video.replaceWith(placeholder());
+          compteur.remove();
+          son.remove();
+        };
         ecran.prepend(video);
+        ecran.append(compteur, son);
       } else {
         ecran.prepend(placeholder());
       }
 
-      // Horodatage qui défile tant que le cadre est affiché
+      // Horodatage qui défile tant que la caméra est affichée
       const horloge = cadre.querySelector('.terminal-camera__horloge');
       const p2 = (n) => String(n).padStart(2, '0');
       const tic = () => {
-        if (!cadre.isConnected) { clearInterval(minuteur); return; }
         const d = new Date();
         horloge.textContent = `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`;
       };
-      const minuteur = setInterval(tic, 1000);
-
-      const body = $('#terminal-body');
-      body.appendChild(cadre);
+      this.murMinuteur = setInterval(tic, 1000);
       tic();
-      body.scrollTop = body.scrollHeight;
-      this.log('');
+
+      contenu.appendChild(cadre);
+      if (video) video.play().catch(() => {});
     },
 
     /* ---------- Décryptage des documents (Cmd/Ctrl+Shift+X) ---------- */
@@ -1737,7 +1878,10 @@ Plus d'informations lors de la prochaine réunion de coordination.`
 
       const args = cmd.split(' ');
       const command = args[0].toLowerCase();
-      const camera = /^\/camera(\d+)$/.exec(command);
+      // /cameras ou /camera000 : mur ; /cameraXXX : un flux ; autre /camera… : aide
+      const murCameras = command === '/cameras' || command === '/camera000';
+      const camera = murCameras ? null : /^\/camera(\d{3})$/.exec(command);
+      const cameraMalFormee = !murCameras && !camera && command.startsWith('/camera');
 
       // /clear : effet CRT puis écran vidé (pas de message système)
       if (command === '/clear') {
@@ -1753,15 +1897,24 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       }
 
       this.run(async () => {
-        if (camera) {
-          await this.cmdCamera(camera[1].padStart(3, '0'));
+        if (murCameras) {
+          await this.type('Connexion au mur de surveillance…');
+          await this.barre('Liaison', 100, 600);
+          this.ouvrirMur();
+          this.log('');
+        } else if (cameraMalFormee) {
+          this.refuser('Il faut écrire la commande sous la forme /cameraXXX, où X sont des chiffres. Les informations sont dans l\'onglet Informations.');
+          this.log('');
+        } else if (camera) {
+          await this.cmdCamera(camera[1]);
         } else {
           switch (command) {
             case '/help':
               await this.type('═══════════════════════════════════════', 'success', 4);
               await this.type('Commandes disponibles:', 'success', 8);
               await this.type('═══════════════════════════════════════', 'success', 4);
-              await this.type('  /camera      - Afficher une archive caméra', 'default', 6);
+              await this.type('  /cameraXXX   - Afficher le flux d\'une caméra (XXX = 3 chiffres)', 'default', 6);
+              await this.type('  /cameras     - Ouvrir le mur de surveillance', 'default', 6);
               await this.type('  /metadata    - Consulter les métadonnées système', 'default', 6);
               await this.type('  /shortcuts   - Afficher les raccourcis clavier', 'default', 6);
               await this.type('  /status      - État du système', 'default', 6);
@@ -1845,6 +1998,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
           }, 10);
           terminal.ouverture();
         } else {
+          terminal.fermerMur();
           $('#terminal-input').blur();
         }
       }
@@ -1865,6 +2019,8 @@ Plus d'informations lors de la prochaine réunion de coordination.`
     if (e.key === 'Escape') {
       const overlay = $('#terminal-overlay');
       if (overlay && overlay.classList.contains('visible')) {
+        // Mur de surveillance ouvert : Échap ferme seulement le mur
+        if (terminal.fermerMur()) return;
         overlay.classList.remove('visible');
         $('#terminal-input').blur();
       }
