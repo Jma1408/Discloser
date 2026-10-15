@@ -26,8 +26,6 @@ function verifierAcces() {
 
 // Vérification au chargement normal
 verifierAcces();
-// Progression ARG : étape 3 = connexion réussie au site caché
-if (sessionStorage.getItem('acces_secret') === 'ok' && window.marquer) marquer(3);
 
 // Vérification quand la page est restaurée depuis le cache du navigateur
 // (bouton Retour / Précédent, bfcache) : le script ne se ré-exécute pas
@@ -820,7 +818,6 @@ window.addEventListener('pageshow', function (event) {
             authMsg.className = 'auth-message success';
           }
           secureUnlocked = true;
-          if (window.marquer) marquer(6); // Progression ARG : Données déverrouillé
           if (authForm) authForm.style.display = 'none';
           if (secureTabs) secureTabs.style.display = 'block';
         } else {
@@ -1863,7 +1860,6 @@ Plus d'informations lors de la prochaine réunion de coordination.`
           await this.dechiffrer('  Caméras de Surveillance .. ', 'OK', 'default', 600);
           await this.barre('Déchiffrement', 100, 700);
           try { sessionStorage.setItem('docs_decryptes', '1'); } catch (e) {}
-          if (window.marquer) marquer(5); // Progression ARG : décryptage fait
           appliquerDecryptage();
           await this.type('Documents d\'Informations décryptés', 'success', 15);
         }
@@ -2001,7 +1997,6 @@ Plus d'informations lors de la prochaine réunion de coordination.`
             if (input) input.focus();
           }, 10);
           terminal.ouverture();
-          if (window.marquer) marquer(4); // Progression ARG : terminal ouvert
         } else {
           terminal.fermerMur();
           $('#terminal-input').blur();
