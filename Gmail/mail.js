@@ -10,18 +10,17 @@ const TEXTE_FIN_MAIL = "[SCRIPT / CODE À INSÉRER ICI]";
 
 // Liens des pièces jointes du mail principal
 const LIEN_PIECE_JOINTE_PDF = "in-progress.html";
-const LIEN_PIECE_JOINTE_VIDEO = "in-progress.html";
+const LIEN_PIECE_JOINTE_VIDEO = "[LIEN YOUTUBE]";
 
-// Lien des menus (engrenage, avatar)
-const LIEN_MENUS = "in-progress.html";
-
-// Clé de sauvegarde dans le localStorage
-const CLE_STOCKAGE = "arg_mail_etat_lu_v1";
+// Clés de sauvegarde dans le localStorage
+const CLE_STOCKAGE = "arg_mail_etat_lu_v1";      // état lu / non lu
+const CLE_ARCHIVES = "arg_mail_archives_v1";     // mails archivés
+const CLE_REGLAGES = "arg_mail_reglages_v1";     // thème, densité, tri, colonne réduite
 
 // Identité du joueur
 const JOUEUR = {
-  nom: "Alex Morel",
-  adresse: "alex.morel.reportages@gmail.com"
+  nom: "Enquêteur",
+  adresse: "enqueteur@messagerie-web.net"
 };
 
 /* ---------- OUTIL : DATES RELATIVES ----------
@@ -75,7 +74,7 @@ Cordialement,`,
     objet: "Dernier rappel : facture impayée",
     apercu: "Sans règlement sous 7 jours, une coupure d'électricité pourra être programmée…",
     corps:
-`Bonjour Alex Morel,
+`Bonjour,
 
 Malgré nos précédents courriers, nous n'avons pas reçu le règlement de votre facture n° 4471-089 d'un montant de 186,52 €, échue le 28 septembre.
 
@@ -116,7 +115,7 @@ Crédit Lyonnais, service clientèle`,
     objet: "Loyer d'octobre",
     apercu: "Bonjour Alex, je n'ai toujours pas reçu votre loyer, pouvez-vous régulariser rapidement ?…",
     corps:
-`Bonjour Alex,
+`Bonjour,
 
 Je n'ai toujours pas reçu votre loyer d'octobre (620,00 € charges comprises), qui était dû le 5. C'est la deuxième fois en trois mois.
 
@@ -136,7 +135,7 @@ Mme Fabre`,
     objet: "Re : Proposition d'article",
     apercu: "Merci pour votre pitch, malheureusement nous n'avons pas de budget pigiste ce mois-ci…",
     corps:
-`Bonjour Alex,
+`Bonjour,
 
 Merci pour votre pitch sur les marchés de gros de Rungis, le sujet est intéressant.
 
@@ -157,7 +156,7 @@ La rédaction`,
     objet: "Actualisation mensuelle de votre situation",
     apercu: "N'oubliez pas de vous actualiser avant le 15 pour maintenir vos droits…",
     corps:
-`Bonjour Alex Morel,
+`Bonjour,
 
 N'oubliez pas de vous actualiser avant le 15 octobre pour maintenir vos droits.
 
@@ -177,7 +176,7 @@ Pôle Emploi`,
     objet: "Votre commande n'a pas pu être validée",
     apercu: "Le paiement a été refusé par votre banque…",
     corps:
-`Bonjour Alex,
+`Bonjour,
 
 Le paiement de votre commande n° D-5582913 (montant : 47,86 €) a été refusé par votre banque.
 
@@ -197,7 +196,7 @@ Leclerc Drive`,
     objet: "Facture impayée : suspension de ligne",
     apercu: "Votre forfait sera suspendu sous 48h…",
     corps:
-`Bonjour Alex Morel,
+`Bonjour,
 
 Votre facture du mois de septembre (19,99 €) reste impayée suite au rejet de votre prélèvement du 4 octobre.
 
@@ -232,6 +231,8 @@ const elRecherche = $("search-input");
 const elSidebar = $("sidebar");
 
 let mailSelectionne = null; // id du mail actuellement ouvert
+let archives = new Set();   // ids des mails archivés
+const reglages = { theme: "clair", densite: "confortable", tri: "recents", colonneReduite: false };
 
 /* ---------- PERSISTANCE (localStorage) ---------- */
 
@@ -256,9 +257,31 @@ function sauvegarderEtat() {
   } catch (e) { /* ignoré */ }
 }
 
+// Lecture / écriture JSON protégées (stockage parfois indisponible)
+function lireStockage(cle) {
+  try { return JSON.parse(localStorage.getItem(cle)); } catch (e) { return null; }
+}
+function ecrireStockage(cle, valeur) {
+  try { localStorage.setItem(cle, JSON.stringify(valeur)); } catch (e) { /* ignoré */ }
+}
+
+function chargerArchives() {
+  const liste = lireStockage(CLE_ARCHIVES);
+  if (Array.isArray(liste)) archives = new Set(liste);
+}
+function sauvegarderArchives() { ecrireStockage(CLE_ARCHIVES, [...archives]); }
+
+function chargerReglages() {
+  const r = lireStockage(CLE_REGLAGES);
+  if (r && typeof r === "object") Object.assign(reglages, r);
+}
+function sauvegarderReglages() { ecrireStockage(CLE_REGLAGES, reglages); }
+
 // Remet tout à zéro (utilisable depuis la console : resetMails())
 function resetMails() {
-  try { localStorage.removeItem(CLE_STOCKAGE); } catch (e) { /* ignoré */ }
+  try {
+    [CLE_STOCKAGE, CLE_ARCHIVES, CLE_REGLAGES].forEach((cle) => localStorage.removeItem(cle));
+  } catch (e) { /* ignoré */ }
   location.reload();
 }
 window.resetMails = resetMails;
@@ -320,14 +343,14 @@ function iconePieceJointe(type) {
     </svg>`;
   }
   return `<svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">
-    <rect x="2" y="5" width="20" height="14" rx="3" fill="#ea4335"/>
+    <rect x="2" y="5" width="20" height="14" rx="3" fill="#d93025"/>
     <path d="M10 9l5 3-5 3V9z" fill="#fff"/>
   </svg>`;
 }
 
 /* ---------- COMPTEUR DE NON LUS ---------- */
 function majCompteur() {
-  const n = MAILS.filter((m) => !m.lu).length;
+  const n = MAILS.filter((m) => !m.lu && !archives.has(m.id)).length;
   elCompteur.textContent = n;
   elCompteur.classList.toggle("zero", n === 0);
 }
@@ -338,6 +361,7 @@ function afficherListe() {
 
   // Filtre : expéditeur, objet ou contenu
   const filtres = MAILS.filter((m) => {
+    if (archives.has(m.id)) return false;
     if (!terme) return true;
     return (
       m.expediteur.toLowerCase().includes(terme) ||
@@ -346,10 +370,15 @@ function afficherListe() {
     );
   });
 
+  // Tri par date selon le réglage
+  filtres.sort((a, b) => (reglages.tri === "anciens" ? a.date - b.date : b.date - a.date));
+
   elListe.innerHTML = "";
 
   if (filtres.length === 0) {
-    elListe.innerHTML = '<div class="no-result">Aucun mail ne correspond à votre recherche.</div>';
+    elListe.innerHTML = terme
+      ? '<div class="no-result">Aucun mail ne correspond à votre recherche.</div>'
+      : '<div class="no-result">Aucun message. Cliquez sur « Boîte de réception » pour réafficher les messages archivés.</div>';
     return;
   }
 
@@ -390,11 +419,22 @@ function ouvrirMail(id) {
 
   // Construit le contenu du mail
   let html = `
+    <div class="reader-actions">
+      <button type="button" data-action="retour" title="Retour à la liste" aria-label="Retour à la liste">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z" fill="currentColor"/></svg>
+      </button>
+      <button type="button" data-action="non-lu" title="Marquer comme non lu" aria-label="Marquer comme non lu">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4l-8 5-8-5V6l8 5 8-5z" fill="currentColor"/></svg>
+      </button>
+      <button type="button" data-action="archiver" title="Archiver" aria-label="Archiver">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M20.5 5.2l-1.4-1.7A1.5 1.5 0 0 0 18 3H6a1.5 1.5 0 0 0-1.1.5L3.5 5.2A2 2 0 0 0 3 6.5V19a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.5a2 2 0 0 0-.5-1.3zM12 17.5L6.5 12H10v-2h4v2h3.5zM5.1 5l.8-1h12l.9 1z" fill="currentColor"/></svg>
+      </button>
+    </div>
     <h1 class="reader-subject">${echapper(m.objet)}</h1>
     <div class="reader-meta">
       <div class="avatar" style="background:${couleurAvatar(m.expediteur)}">${echapper(m.expediteur.charAt(0).toUpperCase())}</div>
       <div class="reader-from">
-        <strong>${echapper(m.expediteur)}</strong><span class="addr"><${echapper(m.adresse)}></span>
+        <strong>${echapper(m.expediteur)}</strong><span class="addr">&lt;${echapper(m.adresse)}&gt;</span>
         <span class="to">À : moi (${echapper(JOUEUR.adresse)})</span>
       </div>
       <div class="reader-date">${dateLongue(m.date)}</div>
@@ -409,7 +449,7 @@ function ouvrirMail(id) {
   // Pièces jointes
   if (m.pieces_jointes && m.pieces_jointes.length > 0) {
     html += `<div class="attachments">
-      <div class="attachments-title">${m.pieces_jointes.length} pièces jointes</div>
+      <div class="attachments-title">${m.pieces_jointes.length} ${m.pieces_jointes.length > 1 ? "pièces jointes" : "pièce jointe"}</div>
       <div class="attachments-list">`;
     m.pieces_jointes.forEach((pj) => {
       html += `
@@ -439,17 +479,14 @@ elRecherche.addEventListener("input", afficherListe);
 
 /* ---------- MENU HAMBURGER : réduit / étend la colonne gauche ---------- */
 $("btn-hamburger").addEventListener("click", () => {
-  elSidebar.classList.toggle("collapsed");
+  reglages.colonneReduite = !reglages.colonneReduite;
+  sauvegarderReglages();
+  appliquerReglages();
 });
 
 /* ---------- MENUS DÉROULANTS (engrenage et avatar) ---------- */
 const menuSettings = $("menu-settings");
 const menuAvatar = $("menu-avatar");
-
-// Les liens des menus pointent vers LIEN_MENUS
-document.querySelectorAll(".dropdown a").forEach((a) => {
-  a.setAttribute("href", LIEN_MENUS);
-});
 
 function basculerMenu(menu, autre) {
   autre.hidden = true;
@@ -472,25 +509,124 @@ document.addEventListener("click", () => {
   menuAvatar.hidden = true;
 });
 
-/* ---------- FENÊTRE DE RÉDACTION (Compose) ---------- */
-const fenetreCompose = $("compose-window");
-const erreurCompose = $("compose-error");
-
-$("btn-compose").addEventListener("click", () => {
-  erreurCompose.hidden = true;
-  fenetreCompose.hidden = false;
-  $("compose-to").focus();
+// Échap ferme les menus
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    menuSettings.hidden = true;
+    menuAvatar.hidden = true;
+  }
 });
 
-$("compose-close").addEventListener("click", () => {
-  fenetreCompose.hidden = true;
+/* ---------- MESSAGE TEMPORAIRE ---------- */
+const elToast = document.createElement("div");
+elToast.className = "toast";
+elToast.setAttribute("role", "status");
+document.body.appendChild(elToast);
+let timerToast = null;
+
+function afficherToast(texte) {
+  elToast.textContent = texte;
+  elToast.classList.add("visible");
+  clearTimeout(timerToast);
+  timerToast = setTimeout(() => elToast.classList.remove("visible"), 2600);
+}
+
+/* ---------- RÉGLAGES (thème, densité, tri, colonne) ---------- */
+function appliquerReglages() {
+  const racine = document.documentElement;
+  racine.classList.toggle("theme-sombre", reglages.theme === "sombre");
+  racine.classList.toggle("densite-compacte", reglages.densite === "compacte");
+  elSidebar.classList.toggle("collapsed", reglages.colonneReduite);
+  menuSettings.querySelector('[data-action="theme"]').textContent =
+    "Thème : " + (reglages.theme === "sombre" ? "sombre" : "clair");
+  menuSettings.querySelector('[data-action="densite"]').textContent =
+    "Densité : " + (reglages.densite === "compacte" ? "compacte" : "confortable");
+  menuSettings.querySelector('[data-action="tri"]').textContent =
+    "Tri : " + (reglages.tri === "anciens" ? "plus anciens d'abord" : "plus récents d'abord");
+}
+
+const ACTIONS_MENU = {
+  theme() {
+    reglages.theme = reglages.theme === "sombre" ? "clair" : "sombre";
+    sauvegarderReglages(); appliquerReglages();
+  },
+  densite() {
+    reglages.densite = reglages.densite === "compacte" ? "confortable" : "compacte";
+    sauvegarderReglages(); appliquerReglages();
+  },
+  tri() {
+    reglages.tri = reglages.tri === "anciens" ? "recents" : "anciens";
+    sauvegarderReglages(); appliquerReglages(); afficherListe();
+  },
+  "tout-lu"() {
+    MAILS.forEach((m) => { m.lu = true; });
+    sauvegarderEtat(); majCompteur(); afficherListe();
+    afficherToast("Tous les messages sont marqués comme lus");
+  },
+  compte() { afficherToast("Fonction indisponible pour ce compte"); },
+  deconnexion() { afficherToast("Déconnexion impossible : session en cours"); }
+};
+
+document.querySelectorAll(".dropdown-item").forEach((bouton) => {
+  bouton.addEventListener("click", () => ACTIONS_MENU[bouton.dataset.action]());
 });
 
-// L'envoi échoue toujours : le joueur ne peut pas vraiment envoyer
-$("compose-send").addEventListener("click", () => {
-  erreurCompose.hidden = true;
-  void erreurCompose.offsetWidth; // relance l'animation
-  erreurCompose.hidden = false;
+/* ---------- ACTIONS DU MAIL OUVERT ---------- */
+function fermerMail() {
+  mailSelectionne = null;
+  elLecteur.hidden = true;
+  elLecteur.innerHTML = "";
+  elVide.style.display = "";
+  afficherListe();
+}
+
+elLecteur.addEventListener("click", (e) => {
+  // Pièce jointe sans lien réel : message au lieu d'une page introuvable
+  const pj = e.target.closest(".attachment");
+  if (pj) {
+    const lien = pj.getAttribute("href");
+    if (!lien || lien.startsWith("[") || lien === "in-progress.html") {
+      e.preventDefault();
+      afficherToast("Pièce jointe indisponible pour le moment");
+    }
+    return;
+  }
+
+  const bouton = e.target.closest("[data-action]");
+  if (!bouton || mailSelectionne === null) return;
+  const m = MAILS.find((x) => x.id === mailSelectionne);
+
+  if (bouton.dataset.action === "retour") {
+    fermerMail();
+  } else if (bouton.dataset.action === "non-lu") {
+    m.lu = false;
+    sauvegarderEtat(); majCompteur(); fermerMail();
+    afficherToast("Message marqué comme non lu");
+  } else if (bouton.dataset.action === "archiver") {
+    archives.add(m.id);
+    sauvegarderArchives(); majCompteur(); fermerMail();
+    afficherToast("Message archivé");
+  }
+});
+
+/* ---------- ENTRÉE « BOÎTE DE RÉCEPTION » : tout réafficher ---------- */
+const elBoite = document.querySelector(".inbox-entry");
+
+function afficherTout() {
+  elRecherche.value = "";
+  const n = archives.size;
+  if (n > 0) {
+    archives.clear();
+    sauvegarderArchives();
+    afficherToast(n > 1 ? n + " messages restaurés" : "1 message restauré");
+  }
+  majCompteur();
+  afficherListe();
+}
+
+elBoite.addEventListener("click", afficherTout);
+elBoite.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); afficherTout(); }
 });
 
 /* ---------- BOUTON CACHÉ DE RESET (tests) ---------- */
@@ -498,5 +634,8 @@ $("btn-reset").addEventListener("click", resetMails);
 
 /* ---------- INITIALISATION ---------- */
 chargerEtat();      // récupère l'état lu/non lu sauvegardé
+chargerArchives();  // mails archivés
+chargerReglages();  // thème, densité, tri, colonne
+appliquerReglages();
 majCompteur();      // compteur de non lus
 afficherListe();    // affiche la liste (aucun mail n'est ouvert automatiquement)

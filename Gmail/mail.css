@@ -1,12 +1,12 @@
 /* ==========================================================
-   mail.css - Style de la boîte mail (inspiration Gmail)
+   mail.css - Style de la boîte mail (inspiration webmail)
    ========================================================== */
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
   height: 100%;
-  font-family: Roboto, Arial, Helvetica, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   background: #F1F1F1;
   color: #202124;
   overflow: hidden;
@@ -43,20 +43,6 @@ a { color: inherit; text-decoration: none; }
   transition: background 0.2s;
 }
 .hamburger:hover { background: #eee; }
-
-.compose-btn {
-  display: flex; align-items: center; gap: 22px;
-  background: #82b6e4;
-  border-radius: 14px;
-  padding: 24px 24px;
-  font-size: 28px;
-  color: #111;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-  transition: box-shadow 0.2s, transform 0.15s, background 0.2s;
-  white-space: nowrap;
-}
-.compose-btn:hover { box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); background: #76aedf; }
-.compose-btn:active { transform: scale(0.98); }
 
 .inbox-entry {
   display: flex; align-items: center; gap: 16px;
@@ -145,10 +131,8 @@ a { color: inherit; text-decoration: none; }
   width: 76px; min-width: 76px;
   padding-left: 12px; padding-right: 12px;
 }
-.sidebar.collapsed .compose-label,
 .sidebar.collapsed .inbox-label,
 .sidebar.collapsed .mail-info { display: none; }
-.sidebar.collapsed .compose-btn { padding: 16px; justify-content: center; }
 .sidebar.collapsed .inbox-entry { flex-direction: column; gap: 4px; padding: 20px 0 10px; }
 .sidebar.collapsed .mail-card { padding: 8px; justify-content: center; }
 .sidebar.collapsed .mail-list { margin: 0 -12px; padding: 0 12px 14px; }
@@ -281,54 +265,6 @@ a { color: inherit; text-decoration: none; }
 .attachment-name { font-size: 14px; font-weight: 500; }
 .attachment-type { font-size: 12px; color: #777; }
 
-/* ---------- Fenêtre de rédaction ---------- */
-.compose-window {
-  position: fixed; right: 40px; bottom: 0;
-  width: 520px;
-  background: #fff;
-  border-radius: 12px 12px 0 0;
-  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.3);
-  display: flex; flex-direction: column;
-  z-index: 100;
-  animation: composeIn 0.25s ease;
-}
-@keyframes composeIn {
-  from { transform: translateY(40px); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
-}
-.compose-header {
-  background: #404040; color: #fff;
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 12px 16px;
-  border-radius: 12px 12px 0 0;
-  font-size: 14px; font-weight: 500;
-}
-.compose-close { color: #fff; font-size: 24px; line-height: 1; padding: 0 4px; }
-.compose-close:hover { color: #ccc; }
-.compose-field {
-  border: none; border-bottom: 1px solid #eee; outline: none;
-  padding: 12px 16px; font-size: 14px; font-family: inherit;
-}
-.compose-body {
-  border: none; outline: none; resize: none;
-  padding: 14px 16px; height: 240px;
-  font-size: 14px; font-family: inherit;
-}
-.compose-error {
-  background: #fdecea; color: #b3261e;
-  font-size: 13px; padding: 10px 16px;
-  border-top: 1px solid #f5c6c2;
-  animation: readerIn 0.25s ease;
-}
-.compose-footer { padding: 12px 16px; }
-.send-btn {
-  background: #1a73e8; color: #fff;
-  padding: 10px 26px; border-radius: 18px;
-  font-size: 14px; font-weight: 500;
-  transition: background 0.2s, box-shadow 0.2s;
-}
-.send-btn:hover { background: #1765cc; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3); }
-
 /* ---------- Bouton de reset caché (tests) ---------- */
 .reset-hidden {
   position: fixed; left: 4px; bottom: 2px;
@@ -338,3 +274,84 @@ a { color: inherit; text-decoration: none; }
   z-index: 200;
 }
 .reset-hidden:hover { opacity: 1; color: #888; background: #eee; border-radius: 4px; }
+/* ---------- En-tête de colonne : nom du service ---------- */
+.sidebar-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.sidebar-head .hamburger { margin-bottom: 0; }
+.brand { font-size: 24px; font-weight: 700; color: #111; white-space: nowrap; }
+.sidebar.collapsed .brand { display: none; }
+.inbox-entry { cursor: pointer; border-radius: 10px; }
+.inbox-entry:hover { background: #f1f3f4; }
+
+/* ---------- Éléments des menus (boutons) ---------- */
+.dropdown-item {
+  display: block; width: 100%; text-align: left;
+  padding: 12px 20px; font-size: 14px; color: inherit;
+  transition: background 0.15s;
+}
+.dropdown-item:hover { background: #f1f3f4; }
+
+/* ---------- Actions du mail ouvert ---------- */
+.reader-actions { display: flex; gap: 8px; margin: -14px 0 18px -10px; }
+.reader-actions button {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #444; transition: background 0.2s;
+}
+.reader-actions button:hover { background: #eee; }
+
+/* ---------- Message temporaire ---------- */
+.toast {
+  position: fixed; left: 50%; bottom: 24px;
+  transform: translate(-50%, 20px);
+  background: #323232; color: #fff;
+  font-size: 14px; padding: 12px 20px; border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 300;
+}
+.toast.visible { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- Densité compacte ---------- */
+html.densite-compacte .mail-list { gap: 6px; }
+html.densite-compacte .mail-card { padding: 6px 12px; }
+html.densite-compacte .mail-card .avatar { width: 32px; height: 32px; font-size: 15px; }
+
+/* ---------- Thème sombre ---------- */
+html.theme-sombre, html.theme-sombre body { background: #1b1c1e; color: #e3e3e3; }
+html.theme-sombre .sidebar,
+html.theme-sombre .reader,
+html.theme-sombre .dropdown { background: #2a2b2e; }
+html.theme-sombre .brand { color: #e3e3e3; }
+html.theme-sombre .hamburger svg,
+html.theme-sombre .inbox-entry svg,
+html.theme-sombre .search-box svg,
+html.theme-sombre .gear svg { filter: invert(1); }
+html.theme-sombre .hamburger:hover,
+html.theme-sombre .gear:hover,
+html.theme-sombre .inbox-entry:hover,
+html.theme-sombre .dropdown-item:hover,
+html.theme-sombre .reader-actions button:hover { background: #3a3b3e; }
+html.theme-sombre .mail-card.unread { background: #2f4a55; }
+html.theme-sombre .mail-card.read { background: #323336; }
+html.theme-sombre .mail-date { color: #bdc1c6; }
+html.theme-sombre .mail-preview,
+html.theme-sombre .reader-from .addr,
+html.theme-sombre .reader-from .to,
+html.theme-sombre .reader-date,
+html.theme-sombre .attachments-title,
+html.theme-sombre .attachment-type,
+html.theme-sombre .dropdown-user span { color: #9aa0a6; }
+html.theme-sombre .search-box { background: #2a2b2e; }
+html.theme-sombre .search-box:focus-within { background: #303134; }
+html.theme-sombre .search-box input { color: #e3e3e3; }
+html.theme-sombre .avatar-btn { border-color: #1b1c1e; }
+html.theme-sombre .dropdown-user { border-bottom-color: #444; }
+html.theme-sombre .reader-body,
+html.theme-sombre #script-fin-mail { color: #e3e3e3; }
+html.theme-sombre .reader-actions button { color: #ccc; }
+html.theme-sombre .attachments { border-top-color: #444; }
+html.theme-sombre .attachment { border-color: #444; }
+html.theme-sombre .attachment:hover { background: #303134; }
+html.theme-sombre .reader-empty,
+html.theme-sombre .no-result { color: #777; }
