@@ -19,6 +19,31 @@
      partenaires"). Si correct -> redirection vers PAGE_SECRETE.
    La comparaison ignore les majuscules/minuscules et les espaces autour.
    ===================================================================== */
+/* ---------- INDICES : widget « Assistance client » (config unique) ----------
+   étape | action attendue | délai (min) | expéditeur | texte | actif
+   apres : l'étape démarre quand celle-ci est franchie (sinon : dès l'arrivée
+   sur le site). ?test=1 dans l'URL divise les délais par 60. */
+const CLE_INDICES_PICKAXE = "discloser_indices_pickaxe";
+const INDICES_PICKAXE = [
+  {
+    id: "pharma",
+    action: "atteindre la page pharmaceutique (via Innovations)",
+    delaiMin: 5,
+    expediteur: "Assistance client Pickaxe",
+    texte: "Bonjour et bienvenue chez Pickaxe ! Vous souhaitez en savoir plus sur nos activités ? Nos dernières avancées sont présentées dans la rubrique Innovations, où la santé occupe désormais une place de choix.",
+    actif: true
+  },
+  {
+    id: "connexion",
+    apres: "pharma",
+    action: "connexion réussie avec le code binaire",
+    delaiMin: 5,
+    expediteur: "Assistance client Pickaxe",
+    texte: "Merci pour votre intérêt pour notre recherche ! Nos fiches de lot contiennent plus d'informations qu'il n'y paraît, même si toutes ne sont pas destinées à l'œil humain. Nos collaborateurs, eux, savent où se connecter.",
+    actif: true
+  }
+];
+
 const CODE_PHARMA = "0000";
 const PAGE_SECRETE = "secret.html";
 // Valeur à modifier : mot de passe requis pour la connexion.
@@ -188,6 +213,7 @@ function initialiserConnexion() {
   const reussirConnexion = () => {
     if (sequenceLancee) return;
     sequenceLancee = true;
+    if (indicesPickaxe) indicesPickaxe.fait('connexion'); // action attendue faite
     message.textContent = '';
     modale.hidden = false;
     boutonContinuer.focus();
@@ -280,7 +306,125 @@ document.addEventListener('DOMContentLoaded', () => {
   initialiserConnexion();
   initialiserAccesPharma();
   initialiserCookies();
+  initialiserAssistance();
 });
+
+/* =====================================================================
+   6. ASSISTANCE CLIENT (indices de l'ARG, propres au site public)
+   ===================================================================== */
+/* Moteur d'indices (local à ce site) : un timer par étape.
+   - demarrer(id) : l'étape devient l'étape en cours (heure mémorisée)
+   - fait(id)     : action faite → timer annulé (et étapes précédentes aussi),
+                    l'étape configurée avec apres: id démarre
+   - restaurer()  : réaffiche les indices déjà reçus (après rechargement)
+   ?test=1 dans l'URL : délais divisés par 60. Stockage : localStorage (try/catch). */
+function moteurIndices(cle, config, envoyer) {
+  var test = new URLSearchParams(location.search).get('test') === '1';
+  function lire() {
+    var e = null;
+    try { e = JSON.parse(localStorage.getItem(cle)); } catch (err) { e = null; }
+    if (!e || typeof e !== 'object') e = {};
+    e.debuts = e.debuts || {}; e.faits = e.faits || {}; e.envoyes = e.envoyes || {};
+    return e;
+  }
+  function ecrire(e) {
+    try { localStorage.setItem(cle, JSON.stringify(e)); } catch (err) { /* stockage indisponible */ }
+  }
+  function verifier() {
+    var e = lire(), maintenant = Date.now();
+    config.forEach(function (ind) {
+      if (ind.actif === false || e.faits[ind.id] || e.envoyes[ind.id] || !e.debuts[ind.id]) return;
+      if (maintenant - e.debuts[ind.id] < ind.delaiMin * 60000 / (test ? 60 : 1)) return;
+      e.envoyes[ind.id] = maintenant;
+      ecrire(e);
+      envoyer(ind, maintenant, true);
+    });
+  }
+  setInterval(verifier, 1000);
+  var api = {
+    demarrer: function (id) {
+      var e = lire();
+      if (!e.debuts[id] && !e.faits[id]) { e.debuts[id] = Date.now(); ecrire(e); }
+      verifier();
+    },
+    fait: function (id) {
+      var e = lire(), rang = config.findIndex(function (c) { return c.id === id; });
+      config.forEach(function (c, i) { if (i <= rang && !e.faits[c.id]) e.faits[c.id] = Date.now(); });
+      ecrire(e);
+      config.forEach(function (c) { if (c.apres === id) api.demarrer(c.id); });
+    },
+    restaurer: function () {
+      var e = lire();
+      config.forEach(function (ind) { if (e.envoyes[ind.id]) envoyer(ind, e.envoyes[ind.id], false); });
+    },
+    effacer: function () {
+      try { localStorage.removeItem(cle); } catch (err) { /* ignoré */ }
+    }
+  };
+  return api;
+}
+
+let indicesPickaxe = null;
+
+function initialiserAssistance() {
+  // Pas sur secret.html (page de l'ARG à la racine, à ne pas modifier)
+  if (/(^|\/)secret\.html$/.test(location.pathname)) return;
+
+  const widget = document.createElement('div');
+  widget.className = 'assistance';
+  widget.innerHTML = `
+    <div class="assistance__panneau" hidden>
+      <div class="assistance__tete">
+        <span>Assistance client</span>
+        <button type="button" class="assistance__fermer" aria-label="Fermer">✕</button>
+      </div>
+      <div class="assistance__liste">
+        <p class="assistance__msg assistance__msg--accueil">Bonjour ! Un conseiller Pickaxe vous répondra ici dans les plus brefs délais.</p>
+      </div>
+    </div>
+    <button type="button" class="assistance__bouton">
+      <span>Assistance client</span>
+      <span class="assistance__badge" hidden>0</span>
+    </button>
+    <div class="assistance__toast" role="status"></div>`;
+  document.body.appendChild(widget);
+
+  const panneau = widget.querySelector('.assistance__panneau');
+  const liste = widget.querySelector('.assistance__liste');
+  const badge = widget.querySelector('.assistance__badge');
+  const toast = widget.querySelector('.assistance__toast');
+  let nonLus = 0;
+  let timerToast = null;
+
+  widget.querySelector('.assistance__bouton').addEventListener('click', () => {
+    panneau.hidden = !panneau.hidden;
+    if (!panneau.hidden) { nonLus = 0; badge.hidden = true; }
+  });
+  widget.querySelector('.assistance__fermer').addEventListener('click', () => { panneau.hidden = true; });
+
+  indicesPickaxe = moteurIndices(CLE_INDICES_PICKAXE, INDICES_PICKAXE, (ind, date, nouveau) => {
+    const msg = document.createElement('div');
+    msg.className = 'assistance__msg';
+    msg.innerHTML = '<strong></strong><p></p>';
+    msg.querySelector('strong').textContent = ind.expediteur;
+    msg.querySelector('p').textContent = ind.texte;
+    liste.appendChild(msg);
+    if (!nouveau) return;
+    nonLus++;
+    badge.textContent = nonLus;
+    badge.hidden = false;
+    toast.textContent = 'Nouveau message';
+    toast.classList.add('visible');
+    clearTimeout(timerToast);
+    timerToast = setTimeout(() => toast.classList.remove('visible'), 2500);
+  });
+
+  indicesPickaxe.restaurer();
+  indicesPickaxe.demarrer('pharma');                 // arrivée sur le site
+  if (document.getElementById('message-code')) {     // page pharmaceutique atteinte
+    indicesPickaxe.fait('pharma');
+  }
+}
 /* =====================================================================
    7. EFFETS VISUELS (classe "fx" sur <body>)
    Désactivés sur connexion, pharmaceutique et secret (pages de l'ARG).

@@ -105,19 +105,144 @@
 
   <div class="toast" id="toast" role="status"></div>
 
+  <!-- ====== BULLE MESSAGES (indices) ====== -->
+  <div class="messages" id="messages">
+    <div class="messages__panneau" id="messages-panneau" hidden>
+      <div class="messages__tete">
+        <span>Messages</span>
+        <button type="button" class="messages__fermer" id="messages-fermer" aria-label="Fermer">✕</button>
+      </div>
+      <div class="messages__liste" id="messages-liste">
+        <p class="messages__vide">Aucun message.</p>
+      </div>
+    </div>
+    <button type="button" class="messages__bouton" id="messages-bouton" aria-label="Messages">
+      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2z" fill="currentColor"/></svg>
+      <span>Messages</span>
+      <span class="messages__badge" id="messages-badge" hidden>0</span>
+    </button>
+  </div>
+
   <script>
-    // Boutons de la barre : inactifs, petit message au clic
+    /* ---------- INDICES (config unique) ----------
+       étape | action attendue | délai (min) | expéditeur | texte | actif
+       Le timer démarre au chargement ; ?test=1 divise les délais par 60. */
+    var CLE_INDICES = 'discloser_indices_linkedyne';
+    var INDICES = [
+      {
+        id: 'pickaxe',
+        action: 'cliquer sur PICKAXE dans Expérience',
+        delaiMin: 5,
+        expediteur: 'Seb',
+        texte: "Si vous lisez ceci, c'est que vous cherchez la même chose que moi. Je n'ai plus le droit d'en parler, mais mon ancien employeur, lui, a toujours sa vitrine. Commencez par là. — Seb",
+        actif: true
+      }
+    ];
+
+    /* Moteur d'indices (local à ce site) : un timer par étape.
+       - demarrer(id) : l'étape devient l'étape en cours (heure mémorisée)
+       - fait(id)     : action faite → timer annulé (et étapes précédentes aussi),
+                        l'étape configurée avec apres: id démarre
+       - restaurer()  : réaffiche les indices déjà reçus (après rechargement)
+       ?test=1 dans l'URL : délais divisés par 60. Stockage : localStorage (try/catch). */
+    function moteurIndices(cle, config, envoyer) {
+      var test = new URLSearchParams(location.search).get('test') === '1';
+      function lire() {
+        var e = null;
+        try { e = JSON.parse(localStorage.getItem(cle)); } catch (err) { e = null; }
+        if (!e || typeof e !== 'object') e = {};
+        e.debuts = e.debuts || {}; e.faits = e.faits || {}; e.envoyes = e.envoyes || {};
+        return e;
+      }
+      function ecrire(e) {
+        try { localStorage.setItem(cle, JSON.stringify(e)); } catch (err) { /* stockage indisponible */ }
+      }
+      function verifier() {
+        var e = lire(), maintenant = Date.now();
+        config.forEach(function (ind) {
+          if (ind.actif === false || e.faits[ind.id] || e.envoyes[ind.id] || !e.debuts[ind.id]) return;
+          if (maintenant - e.debuts[ind.id] < ind.delaiMin * 60000 / (test ? 60 : 1)) return;
+          e.envoyes[ind.id] = maintenant;
+          ecrire(e);
+          envoyer(ind, maintenant, true);
+        });
+      }
+      setInterval(verifier, 1000);
+      var api = {
+        demarrer: function (id) {
+          var e = lire();
+          if (!e.debuts[id] && !e.faits[id]) { e.debuts[id] = Date.now(); ecrire(e); }
+          verifier();
+        },
+        fait: function (id) {
+          var e = lire(), rang = config.findIndex(function (c) { return c.id === id; });
+          config.forEach(function (c, i) { if (i <= rang && !e.faits[c.id]) e.faits[c.id] = Date.now(); });
+          ecrire(e);
+          config.forEach(function (c) { if (c.apres === id) api.demarrer(c.id); });
+        },
+        restaurer: function () {
+          var e = lire();
+          config.forEach(function (ind) { if (e.envoyes[ind.id]) envoyer(ind, e.envoyes[ind.id], false); });
+        },
+        effacer: function () {
+          try { localStorage.removeItem(cle); } catch (err) { /* ignoré */ }
+        }
+      };
+      return api;
+    }
+
     (function () {
       var toast = document.getElementById('toast');
       var timer = null;
+      function afficherToast(texte) {
+        toast.textContent = texte;
+        toast.classList.add('visible');
+        clearTimeout(timer);
+        timer = setTimeout(function () { toast.classList.remove('visible'); }, 2200);
+      }
+
+      // Boutons de la barre : inactifs, petit message au clic
       document.querySelectorAll('[data-indispo]').forEach(function (bouton) {
-        bouton.addEventListener('click', function () {
-          toast.textContent = 'Fonction indisponible';
-          toast.classList.add('visible');
-          clearTimeout(timer);
-          timer = setTimeout(function () { toast.classList.remove('visible'); }, 2200);
-        });
+        bouton.addEventListener('click', function () { afficherToast('Fonction indisponible'); });
       });
+
+      // Bulle Messages : fermée par défaut, badge rouge à l'arrivée d'un message
+      var panneau = document.getElementById('messages-panneau');
+      var liste = document.getElementById('messages-liste');
+      var badge = document.getElementById('messages-badge');
+      var nonLus = 0;
+      function majBadge() {
+        badge.textContent = nonLus;
+        badge.hidden = nonLus === 0;
+      }
+      document.getElementById('messages-bouton').addEventListener('click', function () {
+        panneau.hidden = !panneau.hidden;
+        if (!panneau.hidden) { nonLus = 0; majBadge(); }
+      });
+      document.getElementById('messages-fermer').addEventListener('click', function () { panneau.hidden = true; });
+
+      var indices = moteurIndices(CLE_INDICES, INDICES, function (ind, date, nouveau) {
+        var vide = liste.querySelector('.messages__vide');
+        if (vide) vide.remove();
+        var d = new Date(date);
+        var msg = document.createElement('div');
+        msg.className = 'messages__msg';
+        msg.innerHTML = '<div class="messages__auteur"></div><div class="messages__note">Message programmé</div><p class="messages__texte"></p>';
+        msg.querySelector('.messages__auteur').textContent = ind.expediteur;
+        msg.querySelector('.messages__texte').textContent = ind.texte;
+        liste.prepend(msg);
+        if (nouveau) {
+          nonLus++;
+          majBadge();
+          afficherToast('Nouveau message');
+        }
+      });
+
+      // Action attendue : clic sur PICKAXE (Expérience)
+      document.querySelector('.experience__entreprise a').addEventListener('click', function () { indices.fait('pickaxe'); });
+
+      indices.restaurer();
+      indices.demarrer('pickaxe');
     })();
   </script>
 </body>

@@ -10,6 +10,45 @@ const PAGE_ACCUEIL = "../index.html";
 const NOM_UTILISATEUR = "Lab_Admin";
 
 /* =====================================================================
+   INDICES : mails internes dans l'onglet Messagerie (config unique)
+   étape | action attendue | délai (min) | expéditeur | texte | actif
+   apres : l'étape démarre quand celle-ci est franchie (sinon : au chargement).
+   ?test=1 dans l'URL divise les délais par 60.
+   ===================================================================== */
+const CLE_INDICES_SECRET = "discloser_indices_secret";
+const INDICES_SECRET = [
+  {
+    id: "terminal",
+    action: "ouvrir le terminal",
+    delaiMin: 7,
+    expediteur: "",
+    sujet: "",
+    texte: "",
+    actif: false // l'indice couleur du Laboratoire n'existe pas encore
+  },
+  {
+    id: "decryptage",
+    apres: "terminal",
+    action: "décrypter les documents d'Informations",
+    delaiMin: 7,
+    expediteur: "Marc (Support IT)",
+    sujet: "Re : documents illisibles",
+    texte: "Encore des tickets pour des documents d'Informations « illisibles »… Ils ne sont pas cassés, ils sont chiffrés. Le terminal a un raccourci pour ça, comme tout le reste il est indiqué dans l'aide.",
+    actif: true
+  },
+  {
+    id: "donnees",
+    apres: "decryptage",
+    action: "déverrouiller l'onglet Données",
+    delaiMin: 10,
+    expediteur: "Claire (RH)",
+    sujet: "Planning affiché",
+    texte: "Qui a encore laissé le planning affiché dans la salle de réunion ? Il y a nos accès dessus, et les caméras filment tout. Merci de le retirer avant lundi.",
+    actif: true
+  }
+];
+
+/* =====================================================================
    GARDE-FOU (anti-triche léger)
    Passer GARDE_FOU_ACTIF à false pendant tes tests pour accéder
    directement à ce site sans passer par la connexion.
@@ -818,6 +857,7 @@ window.addEventListener('pageshow', function (event) {
             authMsg.className = 'auth-message success';
           }
           secureUnlocked = true;
+          indicesSecret.fait('donnees'); // action attendue faite : plus d'indice
           if (authForm) authForm.style.display = 'none';
           if (secureTabs) secureTabs.style.display = 'block';
         } else {
@@ -967,6 +1007,100 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       });
     }
   }, 10);
+
+  /* ---------- Indices : nouveaux mails internes ---------- */
+  /* Moteur d'indices (local à ce site) : un timer par étape.
+     - demarrer(id) : l'étape devient l'étape en cours (heure mémorisée)
+     - fait(id)     : action faite → timer annulé (et étapes précédentes aussi),
+                      l'étape configurée avec apres: id démarre
+     - restaurer()  : réaffiche les indices déjà reçus (après rechargement)
+     ?test=1 dans l'URL : délais divisés par 60. Stockage : localStorage (try/catch). */
+  function moteurIndices(cle, config, envoyer) {
+    var test = new URLSearchParams(location.search).get('test') === '1';
+    function lire() {
+      var e = null;
+      try { e = JSON.parse(localStorage.getItem(cle)); } catch (err) { e = null; }
+      if (!e || typeof e !== 'object') e = {};
+      e.debuts = e.debuts || {}; e.faits = e.faits || {}; e.envoyes = e.envoyes || {};
+      return e;
+    }
+    function ecrire(e) {
+      try { localStorage.setItem(cle, JSON.stringify(e)); } catch (err) { /* stockage indisponible */ }
+    }
+    function verifier() {
+      var e = lire(), maintenant = Date.now();
+      config.forEach(function (ind) {
+        if (ind.actif === false || e.faits[ind.id] || e.envoyes[ind.id] || !e.debuts[ind.id]) return;
+        if (maintenant - e.debuts[ind.id] < ind.delaiMin * 60000 / (test ? 60 : 1)) return;
+        e.envoyes[ind.id] = maintenant;
+        ecrire(e);
+        envoyer(ind, maintenant, true);
+      });
+    }
+    setInterval(verifier, 1000);
+    var api = {
+      demarrer: function (id) {
+        var e = lire();
+        if (!e.debuts[id] && !e.faits[id]) { e.debuts[id] = Date.now(); ecrire(e); }
+        verifier();
+      },
+      fait: function (id) {
+        var e = lire(), rang = config.findIndex(function (c) { return c.id === id; });
+        config.forEach(function (c, i) { if (i <= rang && !e.faits[c.id]) e.faits[c.id] = Date.now(); });
+        ecrire(e);
+        config.forEach(function (c) { if (c.apres === id) api.demarrer(c.id); });
+      },
+      restaurer: function () {
+        var e = lire();
+        config.forEach(function (ind) { if (e.envoyes[ind.id]) envoyer(ind, e.envoyes[ind.id], false); });
+      },
+      effacer: function () {
+        try { localStorage.removeItem(cle); } catch (err) { /* ignoré */ }
+      }
+    };
+    return api;
+  }
+
+  const btnMessagerie = document.querySelector('.nav-btn[data-tab="messagerie"]');
+  const badgeMessagerie = document.createElement('span');
+  badgeMessagerie.className = 'nav-badge';
+  badgeMessagerie.hidden = true;
+  if (btnMessagerie) {
+    btnMessagerie.appendChild(badgeMessagerie);
+    btnMessagerie.addEventListener('click', () => { badgeMessagerie.hidden = true; });
+  }
+
+  const indicesSecret = moteurIndices(CLE_INDICES_SECRET, INDICES_SECRET, (ind, date, nouveau) => {
+    const d = new Date(date);
+    const p2 = (n) => String(n).padStart(2, '0');
+    const mail = {
+      id: 'indice-' + ind.id,
+      de: ind.expediteur,
+      sujet: ind.sujet,
+      date: `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`,
+      unread: nouveau,
+      corps: ind.texte
+    };
+    if (emails.some((e) => e.id === mail.id)) return;
+    emails.unshift(mail);
+    const tbody = $('#emails-tbody');
+    if (tbody) {
+      const tr = document.createElement('tr');
+      tr.className = 'email-row' + (mail.unread ? ' unread' : '');
+      tr.dataset.emailId = mail.id;
+      tr.innerHTML = `<td class="unread-badge">${mail.unread ? '●' : ' '}</td><td></td><td class="email-subject"></td><td>${mail.date}</td>`;
+      tr.children[1].textContent = mail.de;
+      tr.children[2].textContent = mail.sujet;
+      // Lu au premier clic
+      tr.addEventListener('click', () => { tr.classList.remove('unread'); tr.children[0].textContent = ' '; });
+      tbody.prepend(tr);
+    }
+    if (nouveau) {
+      badgeMessagerie.textContent = '1';
+      badgeMessagerie.hidden = false;
+      messageStatut('Nouveau message', 3000);
+    }
+  });
 
   /* ==========================================================
      3. BARRE D'ÉTAT (message temporaire + horloge)
@@ -1860,6 +1994,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
           await this.dechiffrer('  Caméras de Surveillance .. ', 'OK', 'default', 600);
           await this.barre('Déchiffrement', 100, 700);
           try { sessionStorage.setItem('docs_decryptes', '1'); } catch (e) {}
+          indicesSecret.fait('decryptage'); // lance le timer de l'étape Données
           appliquerDecryptage();
           await this.type('Documents d\'Informations décryptés', 'success', 15);
         }
@@ -1997,6 +2132,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
             if (input) input.focus();
           }, 10);
           terminal.ouverture();
+          indicesSecret.fait('terminal'); // lance le timer du décryptage
         } else {
           terminal.fermerMur();
           $('#terminal-input').blur();
@@ -2044,6 +2180,10 @@ Plus d'informations lors de la prochaine réunion de coordination.`
   } else {
     lancerIntro();
   }
+
+  // Indices : messages déjà reçus, puis timer de l'étape en cours
+  indicesSecret.restaurer();
+  indicesSecret.demarrer('terminal');
 
   majScrollbar();
 })();

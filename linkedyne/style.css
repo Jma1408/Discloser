@@ -128,6 +128,40 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .toast.visible { opacity: 1; transform: translate(-50%, 0); }
 
+/* ---------- Bulle Messages (indices) ---------- */
+.messages { position: fixed; right: 20px; bottom: 20px; z-index: 40; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.messages__bouton {
+  position: relative; display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; border-radius: 999px;
+  background: var(--vert); color: #fff; font-weight: 700; font-size: 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+}
+.messages__bouton:hover { background: var(--vert-fonce); }
+.messages__badge {
+  position: absolute; top: -6px; right: -6px;
+  min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px;
+  background: #dc2626; color: #fff; font-size: 12px; line-height: 20px; text-align: center;
+}
+.messages__badge[hidden] { display: none; }
+.messages__panneau {
+  width: 320px; max-width: calc(100vw - 40px); max-height: 60vh;
+  display: flex; flex-direction: column;
+  background: var(--carte); border: 1px solid var(--bord); border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .18); overflow: hidden;
+}
+.messages__panneau[hidden] { display: none; }
+.messages__tete {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px; border-bottom: 1px solid var(--bord); font-weight: 700;
+}
+.messages__fermer { color: var(--gris); font-size: 14px; }
+.messages__liste { overflow-y: auto; padding: 12px 14px; }
+.messages__vide { color: var(--gris); font-size: 14px; }
+.messages__msg + .messages__msg { border-top: 1px solid var(--bord); margin-top: 10px; padding-top: 10px; }
+.messages__auteur { font-weight: 700; font-size: 14px; }
+.messages__note { color: var(--gris); font-size: 12px; }
+.messages__texte { font-size: 14px; margin-top: 4px; }
+
 /* ---------- Mobile ---------- */
 @media (max-width: 640px) {
   .topbar__inner { padding: 6px 10px; gap: 8px; }
@@ -142,4 +176,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   .profil__photo { width: 96px; height: 96px; margin-top: -50px; font-size: 40px; }
   .profil__nom { font-size: 21px; }
   .carte__corps { padding: 16px; }
+  .messages { right: 12px; bottom: 12px; }
+  .messages__bouton span:not(.messages__badge) { display: none; }
 }

@@ -541,3 +541,54 @@ body.crt-extinction main {
   .fx .main__img:hover img, .fx .chiffre:hover, .fx .encadre:hover,
   .fx .btn-petit:hover::after, .fx .btn-connexion:hover::after, .fx .cta__btn:hover::after { transform: none; }
 }
+
+/* =====================================================================
+   ASSISTANCE CLIENT (widget d'indices, bas à droite)
+   ===================================================================== */
+.assistance {
+  position: fixed; right: 20px; bottom: 20px; z-index: 900;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+  font-family: var(--police-texte);
+}
+.assistance__bouton {
+  position: relative; border: none; cursor: pointer;
+  padding: 12px 20px; border-radius: 999px;
+  background: var(--jaune); color: var(--blanc);
+  font-family: var(--police-titre); font-size: 16px; letter-spacing: .5px;
+  box-shadow: var(--ombre);
+}
+.assistance__bouton:hover { background: var(--jaune-clair); }
+.assistance__badge {
+  position: absolute; top: -6px; right: -6px;
+  min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px;
+  background: var(--rouge); color: var(--blanc);
+  font-family: var(--police-texte); font-size: 12px; line-height: 20px; text-align: center;
+}
+.assistance__badge[hidden], .assistance__panneau[hidden] { display: none; }
+.assistance__panneau {
+  width: 320px; max-width: calc(100vw - 40px); max-height: 60vh;
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--blanc); border: 1px solid var(--gris-clair); border-radius: 10px;
+  box-shadow: var(--ombre);
+}
+.assistance__tete {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px; background: var(--jaune); color: var(--blanc);
+  font-family: var(--police-titre); font-size: 16px;
+}
+.assistance__fermer { border: none; background: none; color: var(--blanc); font-size: 14px; cursor: pointer; }
+.assistance__liste { overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.assistance__msg { background: var(--gris-clair); border-radius: 8px; padding: 10px 12px; font-size: 14px; line-height: 1.45; margin: 0; }
+.assistance__msg strong { display: block; font-size: 13px; margin-bottom: 4px; }
+.assistance__msg p { margin: 0; }
+.assistance__msg--accueil { background: transparent; color: #555; padding: 0; }
+.assistance__toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 16px);
+  background: #222; color: var(--blanc); font-size: 14px; padding: 10px 18px; border-radius: 8px;
+  opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+}
+.assistance__toast.visible { opacity: 1; transform: translate(-50%, 0); }
+@media (max-width: 600px) {
+  .assistance { right: 12px; bottom: 12px; }
+  .assistance__bouton { padding: 10px 16px; font-size: 14px; }
+}

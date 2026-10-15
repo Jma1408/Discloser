@@ -3,6 +3,23 @@
    Vanilla JS, aucun framework.
    ========================================================== */
 
+/* ---------- INDICES (config unique) ----------
+   étape | action attendue | délai (min) | expéditeur | texte | actif
+   Le timer démarre au chargement de la page ; ?test=1 divise les délais par 60. */
+const CLE_INDICES = "discloser_indices_mail";
+const INDICES = [
+  {
+    id: "pieces-jointes",
+    action: "ouvrir une pièce jointe du premier mail (vidéo ou document)",
+    delaiMin: 5,
+    expediteur: "Anonyme",
+    adresse: "contact.anonyme@protonmail.com",
+    objet: "Ce qu'il a laissé",
+    texte: "Vous n'avez toujours rien ouvert de ce que Seb a laissé. Tout part de là.\n\n— A.",
+    actif: true
+  }
+];
+
 /* ---------- CONSTANTES FACILES À MODIFIER ---------- */
 
 // Texte affiché dans le bloc de fin du mail principal (#script-fin-mail)
@@ -282,6 +299,7 @@ function resetMails() {
   try {
     [CLE_STOCKAGE, CLE_ARCHIVES, CLE_REGLAGES].forEach((cle) => localStorage.removeItem(cle));
   } catch (e) { /* ignoré */ }
+  indices.effacer();
   location.reload();
 }
 window.resetMails = resetMails;
@@ -584,6 +602,7 @@ elLecteur.addEventListener("click", (e) => {
   // Pièce jointe sans lien réel : message au lieu d'une page introuvable
   const pj = e.target.closest(".attachment");
   if (pj) {
+    indices.fait("pieces-jointes"); // action attendue faite : plus d'indice
     const lien = pj.getAttribute("href");
     if (!lien || lien.startsWith("[") || lien === "in-progress.html") {
       e.preventDefault();
@@ -629,13 +648,90 @@ elBoite.addEventListener("keydown", (e) => {
   if (e.key === "Enter" || e.key === " ") { e.preventDefault(); afficherTout(); }
 });
 
+/* Moteur d'indices (local à ce site) : un timer par étape.
+   - demarrer(id) : l'étape devient l'étape en cours (heure mémorisée)
+   - fait(id)     : action faite → timer annulé (et étapes précédentes aussi),
+                    l'étape configurée avec apres: id démarre
+   - restaurer()  : réaffiche les indices déjà reçus (après rechargement)
+   ?test=1 dans l'URL : délais divisés par 60. Stockage : localStorage (try/catch). */
+function moteurIndices(cle, config, envoyer) {
+  var test = new URLSearchParams(location.search).get('test') === '1';
+  function lire() {
+    var e = null;
+    try { e = JSON.parse(localStorage.getItem(cle)); } catch (err) { e = null; }
+    if (!e || typeof e !== 'object') e = {};
+    e.debuts = e.debuts || {}; e.faits = e.faits || {}; e.envoyes = e.envoyes || {};
+    return e;
+  }
+  function ecrire(e) {
+    try { localStorage.setItem(cle, JSON.stringify(e)); } catch (err) { /* stockage indisponible */ }
+  }
+  function verifier() {
+    var e = lire(), maintenant = Date.now();
+    config.forEach(function (ind) {
+      if (ind.actif === false || e.faits[ind.id] || e.envoyes[ind.id] || !e.debuts[ind.id]) return;
+      if (maintenant - e.debuts[ind.id] < ind.delaiMin * 60000 / (test ? 60 : 1)) return;
+      e.envoyes[ind.id] = maintenant;
+      ecrire(e);
+      envoyer(ind, maintenant, true);
+    });
+  }
+  setInterval(verifier, 1000);
+  var api = {
+    demarrer: function (id) {
+      var e = lire();
+      if (!e.debuts[id] && !e.faits[id]) { e.debuts[id] = Date.now(); ecrire(e); }
+      verifier();
+    },
+    fait: function (id) {
+      var e = lire(), rang = config.findIndex(function (c) { return c.id === id; });
+      config.forEach(function (c, i) { if (i <= rang && !e.faits[c.id]) e.faits[c.id] = Date.now(); });
+      ecrire(e);
+      config.forEach(function (c) { if (c.apres === id) api.demarrer(c.id); });
+    },
+    restaurer: function () {
+      var e = lire();
+      config.forEach(function (ind) { if (e.envoyes[ind.id]) envoyer(ind, e.envoyes[ind.id], false); });
+    },
+    effacer: function () {
+      try { localStorage.removeItem(cle); } catch (err) { /* ignoré */ }
+    }
+  };
+  return api;
+}
+
+// Un indice = un nouveau mail en haut de la liste (non lu à l'arrivée)
+const indices = moteurIndices(CLE_INDICES, INDICES, (ind, date, nouveau) => {
+  const id = 900 + INDICES.indexOf(ind);
+  if (MAILS.some((m) => m.id === id)) return;
+  MAILS.push({
+    id: id,
+    expediteur: ind.expediteur,
+    adresse: ind.adresse,
+    objet: ind.objet,
+    apercu: ind.texte.split("\n")[0],
+    corps: ind.texte,
+    date: new Date(date),
+    lu: false,
+    pieces_jointes: []
+  });
+  if (nouveau) {
+    sauvegarderEtat();
+    majCompteur();
+    afficherListe();
+    afficherToast("Nouveau message");
+  }
+});
+
 /* ---------- BOUTON CACHÉ DE RESET (tests) ---------- */
 $("btn-reset").addEventListener("click", resetMails);
 
 /* ---------- INITIALISATION ---------- */
+indices.restaurer(); // indices déjà reçus (avant chargerEtat : garde leur état lu)
 chargerEtat();      // récupère l'état lu/non lu sauvegardé
 chargerArchives();  // mails archivés
 chargerReglages();  // thème, densité, tri, colonne
 appliquerReglages();
 majCompteur();      // compteur de non lus
 afficherListe();    // affiche la liste (aucun mail n'est ouvert automatiquement)
+indices.demarrer("pieces-jointes"); // timer de l'étape en cours
