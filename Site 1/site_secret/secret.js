@@ -37,7 +37,7 @@ window.addEventListener('pageshow', function (event) {
 });
 
 /* ==========================================================
-   secret.js — Logique de la coquille Windows XP
+   secret.js — Logique de la coquille interface rétro
    ========================================================== */
 (function () {
   'use strict';
@@ -100,7 +100,7 @@ window.addEventListener('pageshow', function (event) {
     const logs  = $('#boot-logs');
 
     // Étape 1 : écran noir pur (1 s)
-    // Étape 2 : écran de démarrage XP
+    // Étape 2 : écran de démarrage
     plan(() => {
       boot.classList.remove('hidden');
 
@@ -1159,7 +1159,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
   document.addEventListener('mouseup', () => { drag = null; });
 
   /* ==========================================================
-     8. SCROLLBAR XP PERSONNALISÉE
+     8. SCROLLBAR RÉTRO PERSONNALISÉE
      ========================================================== */
   const content = $('#content');
   const track   = $('#scroll-track');
@@ -1314,11 +1314,11 @@ Plus d'informations lors de la prochaine réunion de coordination.`
     item.addEventListener('click', (e) => e.stopPropagation());
   });
 
-  // Bouton "Arrêter" : décoratif, petit message d'erreur XP
+  // Bouton "Arrêter" : décoratif, petit message d'erreur
   $('#start-shutdown').addEventListener('click', (e) => {
     e.stopPropagation();
     basculerMenuDemarrer(false);
-    ouvrirDialogue('Arrêter Windows', 'Vous n\'avez pas les autorisations nécessaires pour arrêter cet ordinateur.');
+    ouvrirDialogue('Arrêter [NOM]', 'Vous n\'avez pas les autorisations nécessaires pour arrêter cet ordinateur.');
   });
 
   // Bouton "Fermer la session" : ouvre la boîte de confirmation
@@ -1350,7 +1350,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
     if (deconnexionEnCours) return;
     deconnexionEnCours = true;
 
-    // Écran de fermeture XP plein écran
+    // Écran de fermeture plein écran
     shutdownScreen.classList.remove('hidden');
 
     // Suppression du garde-fou pendant l'écran
@@ -1772,7 +1772,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
               await this.dechiffrer('Utilisateur: ', NOM_UTILISATEUR, 'default', 150);
               await this.dechiffrer('Domaine: ', 'PICKAXE.CORP', 'default', 150);
               await this.dechiffrer('Ordinateur: ', 'LAB-ADMIN-001', 'default', 150);
-              await this.dechiffrer('OS: ', 'Microsoft Windows XP Professional', 'default', 150);
+              await this.dechiffrer('OS: ', '[NOM] Professionnel', 'default', 150);
               await this.dechiffrer('Version: ', 'Build 2600', 'default', 150);
               await this.dechiffrer('Niveau d\'accès: ', '4 (Administrateur)', 'default', 150);
               await this.dechiffrer('Authentification: ', 'Biométrique + Mot de passe', 'default', 150);

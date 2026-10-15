@@ -14,7 +14,7 @@
    MOT_DE_PASSE_CONNEXION : mot de passe attendu sur connexion.html.
      -> S'il est correct, une pop-up de succès s'affiche, puis la
         transition "télé qui s'éteint" (CRT) se lance toute seule et
-        redirige vers PAGE_APRES_CONNEXION (le site secret Windows XP).
+        redirige vers PAGE_APRES_CONNEXION (le site secret, interface rétro).
    CODE_PHARMA : code attendu sur pharmaceutique.html (champ "Accès
      partenaires"). Si correct -> redirection vers PAGE_SECRETE.
    La comparaison ignore les majuscules/minuscules et les espaces autour.
