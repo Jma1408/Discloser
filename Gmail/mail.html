@@ -94,48 +94,38 @@
   </main>
 
   <!-- ====== DOCUMENT DE SEB (pièce jointe, fenêtre superposée) ====== -->
-  <div id="doc-seb" class="doc-seb-fond" role="dialog" aria-modal="true" aria-label="Documents_recherches" hidden>
-    <div class="barre">
-      <button type="button" class="imprimer" id="doc-seb-imprimer">Imprimer</button>
-      <button type="button" class="doc-seb-fermer" id="doc-seb-fermer" aria-label="Fermer">×</button>
+  <div id="doc-seb" class="doc-seb-fond" role="dialog" aria-modal="true" aria-label="Documents_recherches.docx" hidden>
+    <div class="doc-seb-chargement" aria-live="polite">
+      <p>Ouverture de Documents_recherches…</p>
+      <div class="doc-seb-progression"><span></span></div>
     </div>
-    <main class="feuille">
-        <div class="entete">
-          <span>Note personnelle — ne pas diffuser</span>
-          <span class="date">Mars 2010</span>
-        </div>
-
-        <p>Si vous lisez ceci, c'est que vous avez vu ma vidéo.</p>
-
-        <p>Voici un document qui vous permettra, je l'espère, de trouver ce que l'entreprise Pickaxe cache.<br>
-        Je sais que <span class="surligne">les haut placés se transmettent les codes d'entrée grâce à des énigmes</span> : ils en sont fans. Personnellement, je n'y ai rien compris.</p>
-
+    <div class="barre">
+      <span class="doc-seb-nom">Documents_recherches.docx</span>
+      <button type="button" class="doc-seb-btn" id="doc-seb-moins" aria-label="Zoom arrière">−</button>
+      <span class="doc-seb-zoom" id="doc-seb-zoom">100 %</span>
+      <button type="button" class="doc-seb-btn" id="doc-seb-plus" aria-label="Zoom avant">+</button>
+      <button type="button" class="imprimer" id="doc-seb-imprimer">Imprimer</button>
+      <button type="button" class="doc-seb-btn doc-seb-fermer" id="doc-seb-fermer" aria-label="Fermer">×</button>
+    </div>
+    <div class="doc-seb-page">
+      <main class="feuille">
+        <span class="trombone" aria-hidden="true"></span>
+        <span class="tampon" aria-hidden="true"></span>
+        <p>Voici un document qui vous permettra, je l’espère, de trouver ce que l’entreprise Picaxe cache.<br>
+        Je sais que les haut-placés transmettent les codes d’entrée grâce à des énigmes, ils sont fan de ça. Personnellement je n’ai rien compris.</p>
         <p>Voici quelques messages codés que je connais, avec leurs décodeurs :</p>
         <ul>
           <li>Code César : <a href="https://md5decrypt.net/Cesar/" target="_blank" rel="noopener">https://md5decrypt.net/Cesar/</a></li>
-          <li>Code binaire : <a href="https://www.dcode.fr/code-binaire" target="_blank" rel="noopener">https://www.dcode.fr/code-binaire</a></li>
-          <li>A = 1, B = 2, C = 3…</li>
-          <li>Alphabet phonétique :
-            <table class="phonetique">
-              <tr><td class="lettre">A</td><td>Alfa</td><td class="lettre">J</td><td>Juliett</td><td class="lettre">S</td><td>Sierra</td></tr>
-              <tr><td class="lettre">B</td><td>Bravo</td><td class="lettre">K</td><td>Kilo</td><td class="lettre">T</td><td>Tango</td></tr>
-              <tr><td class="lettre">C</td><td>Charlie</td><td class="lettre">L</td><td>Lima</td><td class="lettre">U</td><td>Uniform</td></tr>
-              <tr><td class="lettre">D</td><td>Delta</td><td class="lettre">M</td><td>Mike</td><td class="lettre">V</td><td>Victor</td></tr>
-              <tr><td class="lettre">E</td><td>Echo</td><td class="lettre">N</td><td>November</td><td class="lettre">W</td><td>Whiskey</td></tr>
-              <tr><td class="lettre">F</td><td>Foxtrot</td><td class="lettre">O</td><td>Oscar</td><td class="lettre">X</td><td>X-ray</td></tr>
-              <tr><td class="lettre">G</td><td>Golf</td><td class="lettre">P</td><td>Papa</td><td class="lettre">Y</td><td>Yankee</td></tr>
-              <tr><td class="lettre">H</td><td>Hotel</td><td class="lettre">Q</td><td>Quebec</td><td class="lettre">Z</td><td>Zulu</td></tr>
-              <tr><td class="lettre">I</td><td>India</td><td class="lettre">R</td><td>Romeo</td><td></td><td></td></tr>
-            </table>
-          </li>
+          <li>Code Binaire : <a href="https://www.dcode.fr/code-binaire" target="_blank" rel="noopener">https://www.dcode.fr/code-binaire</a></li>
+          <li>a=1, b=2, c=3…</li>
+          <li>Alphabet Phonétique <a href="https://cncherbourg.fr/wp-content/uploads/2021/04/Alphabet-Phonetique.jpg" target="_blank" rel="noopener">Alphabet-Phonetique.jpg</a></li>
           <li>Code Morse : <a href="https://www.dcode.fr/code-morse" target="_blank" rel="noopener">https://www.dcode.fr/code-morse</a></li>
         </ul>
-
-        <p class="avec-note">Je pense que vous aurez besoin d'utiliser votre cerveau tout au long de l'enquête : il y aura sûrement des énigmes avec des codes à chaque étape.<br>
-        Je pense aussi qu'il y a un site caché dans leur site de façade. Essayez déjà de trouver leur premier site ! C'est fou comme il est mal référencé… Je l'avais, mais je l'ai perdu. Mon profil devrait vous aider.<span class="note-manuscrite" aria-label="Annotation manuscrite">LinkedYne ?</span></p>
-
-        <p class="signature">Bon courage.<br>— Seb</p>
+        <p>Je pense que vous aurez besoin d’utiliser votre cerveau tout au long de l’enquête, il y aura surement des énigmes avec des codes tout au long…<br>
+        Je pense qu’il y a un site caché dans leur site de façade, essayez déjà de trouver leur premier site ! C’est fou comme il est mal référencé… Je l’avais mais je l’ai perdu.</p>
+        <p>Bon courage.</p>
       </main>
+    </div>
   </div>
 
   <!-- Bouton caché de réinitialisation (tests) -->

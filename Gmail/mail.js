@@ -727,18 +727,38 @@ const indices = moteurIndices(CLE_INDICES, INDICES, (ind, date, nouveau) => {
 
 /* ---------- DOCUMENT DE SEB (fenêtre superposée) ---------- */
 const elDocument = $("doc-seb");
+const elFeuille = elDocument.querySelector(".feuille");
+let zoomDocument = 1;
+let minuterieDocument = null;
+function appliquerZoom(pas) {
+  zoomDocument = Math.min(2, Math.max(0.5, Math.round((zoomDocument + pas) * 10) / 10));
+  elFeuille.style.zoom = zoomDocument;
+  $("doc-seb-zoom").textContent = Math.round(zoomDocument * 100) + " %";
+}
 function ouvrirDocument() {
   elDocument.hidden = false;
+  elDocument.classList.add("chargement"); // fenêtre « Ouverture de … » (≈ 1 s)
   elDocument.scrollTop = 0;
   document.body.style.overflow = "hidden";
-  $("doc-seb-fermer").focus();
+  clearTimeout(minuterieDocument);
+  minuterieDocument = setTimeout(() => {
+    elDocument.classList.remove("chargement");
+    $("doc-seb-fermer").focus();
+  }, 1000);
 }
 function fermerDocument() {
+  clearTimeout(minuterieDocument);
   elDocument.hidden = true;
+  elDocument.classList.remove("chargement");
   document.body.style.overflow = "";
 }
 $("doc-seb-fermer").addEventListener("click", fermerDocument);
-elDocument.addEventListener("click", (e) => { if (e.target === elDocument) fermerDocument(); });
+$("doc-seb-moins").addEventListener("click", () => appliquerZoom(-0.1));
+$("doc-seb-plus").addEventListener("click", () => appliquerZoom(0.1));
+// Clic hors de la feuille (et hors de la barre) : fermeture
+elDocument.addEventListener("click", (e) => {
+  if (!e.target.closest(".feuille, .barre, .doc-seb-chargement")) fermerDocument();
+});
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && !elDocument.hidden) fermerDocument();
 });
