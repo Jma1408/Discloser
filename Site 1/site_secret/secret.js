@@ -578,8 +578,16 @@ window.addEventListener('pageshow', function (event) {
   `;
 
   // ONGLET LABORATOIRE
+  // Ajouter une photo : déposer site_secret/labo/photo0XX.jpg,
+  // puis ajouter son numéro (ex. 12) dans « disponibles ». Sinon : placeholder, aucune requête.
+  const GALERIE = {
+    total: 100,
+    chemin: n => `labo/photo${String(n).padStart(3, '0')}.jpg`,
+    disponibles: []
+  };
   let currentPhotoIndex = 0;
-  const totalPhotos = 10;
+  const totalPhotos = GALERIE.total;
+  const photoDispo = i => GALERIE.disponibles.includes(i + 1);
 
   function updateGallery() {
     const thumbs = $$('.thumbnail');
@@ -591,17 +599,26 @@ window.addEventListener('pageshow', function (event) {
     const infoEl = $('#gallery-image-info');
     if (infoEl) infoEl.textContent = `Photo ${photoNum}`;
     const placeholderEl = $('#gallery-placeholder');
-    if (placeholderEl) placeholderEl.textContent = photoNum;
+    if (placeholderEl) placeholderEl.textContent = `Photo ${photoNum} — en attente`;
+    // Photo réelle seulement si déclarée disponible (pas de requête sinon)
+    const photoEl = $('#gallery-photo');
+    const dispo = photoDispo(currentPhotoIndex);
+    if (photoEl) {
+      if (dispo) photoEl.src = GALERIE.chemin(currentPhotoIndex + 1);
+      else photoEl.removeAttribute('src');
+      photoEl.hidden = !dispo;
+      photoEl.previousElementSibling.style.display = dispo ? 'none' : ''; // .image-placeholder est en display:flex
+    }
     const counterEl = $('#gallery-counter');
     if (counterEl) counterEl.textContent = currentPhotoIndex + 1;
-    updateGalleryButtons();
-  }
-
-  function updateGalleryButtons() {
-    const prev = $('#gallery-prev');
-    const next = $('#gallery-next');
-    if (prev) prev.disabled = currentPhotoIndex === 0;
-    if (next) next.disabled = currentPhotoIndex === totalPhotos - 1;
+    // Centre la vignette active dans la bande, sans faire défiler la page
+    const bande = $('#gallery-thumbs');
+    const active = thumbs[currentPhotoIndex];
+    if (bande && active) {
+      const b = bande.getBoundingClientRect();
+      const a = active.getBoundingClientRect();
+      bande.scrollLeft += (a.left + a.width / 2) - (b.left + b.width / 2);
+    }
   }
 
   $('#contenu-laboratoire').innerHTML = `
@@ -614,8 +631,9 @@ window.addEventListener('pageshow', function (event) {
       <div class="gallery-viewer">
         <div class="gallery-image-frame">
           <div class="image-placeholder">
-            <div class="placeholder-text" id="gallery-placeholder">001</div>
+            <div class="placeholder-text" id="gallery-placeholder">Photo 001 — en attente</div>
           </div>
+          <img id="gallery-photo" alt="" hidden style="width:100%;height:100%;object-fit:cover">
         </div>
         
         <div class="gallery-image-info" id="gallery-image-info">Photo 001</div>
@@ -629,7 +647,9 @@ window.addEventListener('pageshow', function (event) {
 
       <div class="gallery-thumbnails" id="gallery-thumbs">
         ${Array.from({length: totalPhotos}, (_, i) => 
-          `<div class="thumbnail ${i === 0 ? 'active' : ''}" data-index="${i}"></div>`
+          `<div class="thumbnail ${i === 0 ? 'active' : ''}" data-index="${i}">${photoDispo(i)
+            ? `<img src="${GALERIE.chemin(i + 1)}" loading="lazy" alt="" style="width:100%;height:100%;object-fit:cover;display:block">`
+            : ''}</div>`
         ).join('')}
       </div>
 
@@ -651,27 +671,26 @@ window.addEventListener('pageshow', function (event) {
     const nextBtn = $('#gallery-next');
 
     if (prevBtn) {
+      // Boucle : Précédent à 1 → 100
       prevBtn.addEventListener('click', () => {
-        if (currentPhotoIndex > 0) {
-          currentPhotoIndex--;
-          updateGallery();
-        }
+        currentPhotoIndex = (currentPhotoIndex - 1 + totalPhotos) % totalPhotos;
+        updateGallery();
       });
     }
 
     if (nextBtn) {
+      // Boucle : Suivant à 100 → 1
       nextBtn.addEventListener('click', () => {
-        if (currentPhotoIndex < totalPhotos - 1) {
-          currentPhotoIndex++;
-          updateGallery();
-        }
+        currentPhotoIndex = (currentPhotoIndex + 1) % totalPhotos;
+        updateGallery();
       });
     }
 
     const thumbs = $$('.thumbnail');
     thumbs.forEach(thumb => {
       thumb.addEventListener('click', (e) => {
-        currentPhotoIndex = parseInt(e.target.dataset.index);
+        // currentTarget : le clic peut tomber sur l'<img> de la vignette
+        currentPhotoIndex = parseInt(e.currentTarget.dataset.index);
         updateGallery();
       });
     });
