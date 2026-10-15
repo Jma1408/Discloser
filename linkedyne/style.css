@@ -81,7 +81,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .profil__nom { font-size: 25px; margin-top: 10px; }
 .profil__titre { font-size: 16px; margin-top: 2px; }
-.profil__meta { font-size: 14px; color: var(--gris); margin-top: 6px; }
 .profil__relations { font-size: 14px; color: var(--vert); font-weight: 700; margin-top: 4px; }
 
 /* ---------- Infos ---------- */
