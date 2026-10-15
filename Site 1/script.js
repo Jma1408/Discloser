@@ -145,6 +145,9 @@ function construireFooter() {
 function lancerTransitionCRT() {
   // Garde-fou : le site secret vérifiera cette valeur à son arrivée
   sessionStorage.setItem('acces_secret', 'ok');
+  // Nouvelle connexion : l'intro du site caché doit se rejouer
+  // (un simple rechargement de secret.html continue de la passer)
+  try { sessionStorage.removeItem('introVue'); } catch (e) { /* ignoré */ }
 
   // Son optionnel (ignoré si la constante est vide ou si le navigateur bloque l'audio)
   if (SON_EXTINCTION) {

@@ -267,7 +267,7 @@ window.addEventListener('pageshow', function (event) {
             <span class="doc-title">Protocole du Site</span>
             <span class="doc-date">2003-08-22</span>
           </div>
-          <div class="doc-content redacted">
+          <div class="doc-content">
   <div class="doc-section">
     <h3 class="doc-title">PROTOCOLE D'ACCÈS - INFRASTRUCTURE SÉCURISÉE</h3>
     
