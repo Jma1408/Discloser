@@ -12,6 +12,8 @@
    Pour ajouter une étape (vidéo, LinkedYne…) : ajouter une ligne ici
    et un appel marquer(n) dans la page concernée. */
 const DEBUG_INDICES = false; // true : délais divisés par 60 (5 min -> 5 s)
+// Mode test sans toucher au code : mail.html?test=1 (délais divisés par 60)
+const MODE_TEST = DEBUG_INDICES || new URLSearchParams(location.search).get("test") === "1";
 const ETAPE_FIN_ARG = 6;     // fin provisoire de l'ARG (plus de confirmation de fermeture)
 const INDICES = [
   { etape: 1, page: "Site 1/index.html", delaiMin: 5, objet: "Avez-vous commencé ?",
@@ -701,7 +703,7 @@ function verifierIndices() {
     // Le délai démarre au franchissement de l'étape précédente (ou au début de l'ARG)
     const depart = i === 0 ? e.debut : e.etapes[INDICES[i - 1].etape];
     if (!depart) return;
-    const delai = ind.delaiMin * 60000 / (DEBUG_INDICES ? 60 : 1);
+    const delai = ind.delaiMin * 60000 / (MODE_TEST ? 60 : 1);
     if (maintenant - depart < delai) return;
 
     ProgressionARG.noterIndice(ind.etape);
