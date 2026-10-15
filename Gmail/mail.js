@@ -14,6 +14,7 @@
 const DEBUG_INDICES = false; // true : délais divisés par 60 (5 min -> 5 s)
 // Mode test sans toucher au code : mail.html?test=1 (délais divisés par 60)
 const MODE_TEST = DEBUG_INDICES || new URLSearchParams(location.search).get("test") === "1";
+if (MODE_TEST) console.info("[Messagerie] Mode test des indices actif : délais divisés par 60.");
 const ETAPE_FIN_ARG = 6;     // fin provisoire de l'ARG (plus de confirmation de fermeture)
 const INDICES = [
   { etape: 1, page: "Site 1/index.html", delaiMin: 5, objet: "Avez-vous commencé ?",
