@@ -541,6 +541,32 @@ window.addEventListener('pageshow', function (event) {
         </div>
       </div>
     </div>
+
+    <!-- CAM-008 -->
+    <div class="camera-entry accessible">
+      <div class="camera-header">
+        <span class="camera-id">CAM-008</span>
+        <span class="camera-status">✓ ACCESSIBLE</span>
+      </div>
+      <div class="camera-details">
+        <div class="detail-row">
+          <span class="label">Localisation :</span>
+          <span class="value">Salle de réunion (Étage 3) - Secteur privé</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Type :</span>
+          <span class="value">Caméra fixe (capture image)</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Couverture :</span>
+          <span class="value">Écran de présentation</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Dernier enregistrement :</span>
+          <span class="value">2026-10-15 11:04:12</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="doc-notes">
@@ -1716,7 +1742,8 @@ Plus d'informations lors de la prochaine réunion de coordination.`
      Déposer les vidéos (format .mp4) dans site_secret/videos/ avec ces noms,
      puis passer "disponible" à true pour la caméra concernée.
      Tant que "disponible" vaut false, un placeholder s'affiche (aucune
-     requête, donc aucune erreur dans la console). */
+     requête, donc aucune erreur dans la console).
+     Caméra fixe (image au lieu d'une vidéo) : « image » à la place de « video ». */
   const CAMERAS = {
     '001': { video: 'videos/camera001.mp4', disponible: true },
     '002': { video: 'videos/camera002.mp4', disponible: true },
@@ -1724,7 +1751,8 @@ Plus d'informations lors de la prochaine réunion de coordination.`
     '004': { video: 'videos/camera004.mp4', disponible: true },
     '005': { video: 'videos/camera005.mp4', disponible: true },
     '006': { video: 'videos/camera006.mp4', disponible: true },
-    '007': { video: 'videos/camera007.mp4', disponible: true }
+    '007': { video: 'videos/camera007.mp4', disponible: true },
+    '008': { image: 'videos/camera008.jpg', disponible: true }
   };
 
   // Animations passées d'office si l'utilisateur préfère un mouvement réduit
@@ -2064,7 +2092,14 @@ Plus d'informations lors de la prochaine réunion de coordination.`
           caseCam.classList.add('terminal-mur__case--bruit');
         };
 
-        if (cam.disponible) {
+        if (cam.disponible && cam.image) {
+          // Caméra fixe : l'image en aperçu
+          const img = document.createElement('img');
+          img.src = cam.image;
+          img.alt = '';
+          img.onerror = () => { img.remove(); bruit('SIGNAL ABSENT'); };
+          apercu.appendChild(img);
+        } else if (cam.disponible) {
           // Première image en aperçu
           const v = document.createElement('video');
           v.muted = true;
@@ -2099,12 +2134,21 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       const placeholder = () => {
         const p = document.createElement('div');
         p.className = 'terminal-camera__placeholder';
-        p.textContent = `[PLACEHOLDER] Caméra ${id} opérationnelle, vidéo attendue : ${camera.video}`;
+        p.textContent = `[PLACEHOLDER] Caméra ${id} opérationnelle, vidéo attendue : ${camera.video || camera.image}`;
         return p;
       };
 
       let video = null;
-      if (camera.disponible) {
+      if (camera.disponible && camera.image) {
+        // Caméra fixe : image seule (ni compteur ni bouton son)
+        cadre.classList.add('terminal-camera--image');
+        const img = document.createElement('img');
+        img.className = 'terminal-video';
+        img.src = camera.image;
+        img.alt = `Caméra ${id}`;
+        img.onerror = () => img.replaceWith(placeholder());
+        ecran.prepend(img);
+      } else if (camera.disponible) {
         video = document.createElement('video');
         video.className = 'terminal-video';
         video.src = camera.video;
