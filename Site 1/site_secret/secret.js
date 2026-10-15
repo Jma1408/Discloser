@@ -45,6 +45,25 @@ const INDICES_SECRET = [
     sujet: "Enregistrement en boucle",
     texte: "Qui a laissé tourner l'enregistrement de la salle radio ? Ces quatre mots en boucle, toute la journée… Et rappelez-vous la règle maison : chez nous, chaque lettre a son rang.",
     actif: true
+  },
+  /* --- Fin de l'ARG (démarrées par le code de la fin, pas au chargement) --- */
+  {
+    id: "preuve",
+    action: "regarder la vidéo de Données jusqu'au bout",
+    delaiMin: 0, // envoyé dès la fin de la vidéo
+    expediteur: "A.",
+    sujet: "Maintenant",
+    texte: "Vous avez la preuve. Publiez-la avant qu'ils ne s'en rendent compte.",
+    actif: true
+  },
+  {
+    id: "alerte",
+    action: "trouver la clé de contournement",
+    delaiMin: 2, // après le début de l'alerte
+    expediteur: "A.",
+    sujet: "Re : Maintenant",
+    texte: "Seb vous avait laissé les outils. Un empereur romain décalait déjà ses lettres… Comptez vos caméras.",
+    actif: true
   }
 ];
 
@@ -1313,6 +1332,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       });
     }
 
+    if (emailId === 'indice-preuve') ajouterBoutonPublier(container.querySelector('.email-detail-content'));
     emailDetailActif = emailId;
   }
 
@@ -2521,6 +2541,302 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       }
     }
   });
+
+  /* ==========================================================
+     10 bis. FIN DE L'ARG (texte, CSS et JS uniquement)
+     Vidéo de Données vue → mail « Maintenant » → Publier la preuve →
+     diffusion → alerte à 61 % + chrono 05:00 → clé de contournement
+     dans le terminal → diffusion à 100 % → écran final.
+     État sauvegardé (localStorage) : un rechargement reprend l'étape.
+     ?test=1 : chrono de 30 s, diffusion accélérée.
+     ========================================================== */
+  const CLE_FIN = 'discloser_fin';
+  const FIN_TEST = new URLSearchParams(location.search).get('test') === '1';
+  const FIN_CHRONO_MS = FIN_TEST ? 30000 : 5 * 60000;
+  const FIN_PAS_MS = FIN_TEST ? 40 : 150;     // 1 % de diffusion
+  const FIN_ARRET = 61;                       // % où le pare-feu bloque
+  const FIN_REDACTIONS = 12;
+  const EMPREINTE_CLE_FIN = 4274055113;       // empreinte de la clé, jamais la clé en clair
+
+  function lireFin() {
+    let e = null;
+    try { e = JSON.parse(localStorage.getItem(CLE_FIN)); } catch (err) { e = null; }
+    return e && typeof e === 'object' ? e : { etape: '' };
+  }
+  function ecrireFin(maj) {
+    const e = Object.assign(lireFin(), maj);
+    try { localStorage.setItem(CLE_FIN, JSON.stringify(e)); } catch (err) { /* stockage indisponible */ }
+    return e;
+  }
+
+  const fin = { minuterie: null, chrono: null, epreuve: false, fenetre: null };
+
+  /* ---------- 1. Déclencheur : fin de la vidéo de Données ---------- */
+  function ajouterBoutonPublier(zone) {
+    if (!zone || zone.querySelector('.fin-publier')) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'xp-button fin-publier';
+    zone.appendChild(b);
+    majBoutonsPublier();
+  }
+  function majBoutonsPublier() {
+    const etape = lireFin().etape;
+    document.querySelectorAll('.fin-publier').forEach((b) => {
+      b.disabled = etape !== 'preuve';
+      b.textContent = etape === 'fini' ? 'Preuve publiée' : 'Publier la preuve';
+    });
+  }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('.fin-publier');
+    if (b && !b.disabled) { ecrireFin({ etape: 'envoi', progression: 0 }); lancerDiffusion(0); }
+  });
+  const lecteurDonnees = $('#lab-video-lecteur');
+  if (lecteurDonnees) {
+    lecteurDonnees.addEventListener('ended', () => {
+      if (!lireFin().etape) ecrireFin({ etape: 'preuve' });
+      indicesSecret.demarrer('preuve'); // mail « Maintenant » de A.
+      ajouterBoutonPublier($('#lab-video'));
+    });
+  }
+
+  /* ---------- 2. Fenêtre « Diffusion aux rédactions » ---------- */
+  function fenetreDiffusion() {
+    if (fin.fenetre) return fin.fenetre;
+    const f = document.createElement('div');
+    f.className = 'fin-diffusion';
+    f.innerHTML = `
+      <div class="fin-diffusion__fenetre" role="dialog" aria-label="Diffusion aux rédactions">
+        <div class="fin-diffusion__titre">Diffusion aux rédactions</div>
+        <div class="fin-diffusion__corps">
+          <div class="fin-diffusion__barre"><span></span></div>
+          <div class="fin-diffusion__pourcent">0 %</div>
+          <div class="fin-diffusion__journal" aria-live="polite"></div>
+        </div>
+      </div>`;
+    document.body.appendChild(f);
+    fin.fenetre = f;
+    return f;
+  }
+  function journal(texte, classe) {
+    const j = fenetreDiffusion().querySelector('.fin-diffusion__journal');
+    const l = document.createElement('div');
+    l.textContent = texte;
+    if (classe) l.className = classe;
+    j.appendChild(l);
+    j.scrollTop = j.scrollHeight;
+  }
+  function afficherProgression(p) {
+    const f = fenetreDiffusion();
+    f.querySelector('.fin-diffusion__barre span').style.width = p + '%';
+    f.querySelector('.fin-diffusion__pourcent').textContent = p + ' %';
+  }
+  // Rédaction n terminée quand la barre atteint n/12
+  const seuilRedaction = (n) => Math.round(n * 100 / FIN_REDACTIONS);
+  function rejouerJournal(jusqua) {
+    fenetreDiffusion().querySelector('.fin-diffusion__journal').innerHTML = '';
+    journal('Préparation du dossier de preuves… OK');
+    for (let n = 1; n <= FIN_REDACTIONS && seuilRedaction(n) <= jusqua; n++) journal(`Connexion rédaction ${n}/${FIN_REDACTIONS}… OK`);
+  }
+  function lancerDiffusion(depart) {
+    clearInterval(fin.minuterie);
+    majBoutonsPublier();
+    fenetreDiffusion();
+    rejouerJournal(depart);
+    let p = depart;
+    afficherProgression(p);
+    fin.minuterie = setInterval(() => {
+      p++;
+      afficherProgression(p);
+      for (let n = 1; n <= FIN_REDACTIONS; n++) if (seuilRedaction(n) === p) journal(`Connexion rédaction ${n}/${FIN_REDACTIONS}… OK`);
+      if (p < FIN_ARRET && p % 5 === 0) ecrireFin({ progression: p });
+      if (p === FIN_ARRET && lireFin().etape === 'envoi') {
+        clearInterval(fin.minuterie);
+        const n = Math.floor(p * FIN_REDACTIONS / 100) + 1;
+        journal(`Connexion rédaction ${n}/${FIN_REDACTIONS}… BLOQUÉ`, 'fin-ko');
+        ecrireFin({ etape: 'alerte', progression: FIN_ARRET, limite: Date.now() + FIN_CHRONO_MS });
+        demarrerAlerte();
+      }
+      if (p >= 100) {
+        clearInterval(fin.minuterie);
+        journal(`Diffusion terminée — ${FIN_REDACTIONS}/${FIN_REDACTIONS} rédactions.`, 'fin-ok');
+        ecrireFin({ etape: 'fini' });
+        majBoutonsPublier();
+        setTimeout(ecranFinal, 1200);
+      }
+    }, FIN_PAS_MS);
+  }
+
+  /* ---------- 3. Alerte : site en état d'intrusion + chrono ---------- */
+  function demarrerAlerte() {
+    document.body.classList.add('fin-alerte');
+    if (!$('#fin-bandeau')) {
+      const bandeau = document.createElement('div');
+      bandeau.id = 'fin-bandeau';
+      bandeau.className = 'fin-bandeau';
+      bandeau.innerHTML = '<span>INTRUSION DÉTECTÉE — PARE-FEU ACTIVÉ</span><span class="fin-chrono" id="fin-chrono">05:00</span>';
+      document.body.appendChild(bandeau);
+    }
+    indicesSecret.demarrer('alerte'); // indice de A. 2 min après le début de l'alerte
+    const majChrono = () => {
+      const reste = Math.max(0, lireFin().limite - Date.now());
+      const s = Math.ceil(reste / 1000);
+      $('#fin-chrono').textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+      if (reste <= 0) echec();
+    };
+    clearInterval(fin.chrono);
+    fin.chrono = setInterval(majChrono, 250);
+    majChrono();
+    if (lireFin().etape === 'alerte') lancerEpreuve();
+  }
+  function arreterAlerte() {
+    clearInterval(fin.chrono);
+    document.body.classList.remove('fin-alerte');
+    const b = $('#fin-bandeau');
+    if (b) b.remove();
+  }
+
+  /* ---------- 4. Épreuve : clé de contournement dans le terminal ---------- */
+  function lancerEpreuve() {
+    if (lireFin().etape !== 'alerte') return;
+    if (terminal.anim.actif) { terminal.passer(); setTimeout(lancerEpreuve, 60); return; }
+    const overlay = $('#terminal-overlay');
+    terminal.fermerMur();
+    terminal.bootFait = true;
+    overlay.classList.add('visible');
+    fin.epreuve = true;
+    const input = $('#terminal-input');
+    const prompt = overlay.querySelector('.terminal-prompt');
+    terminal.run(async () => {
+      terminal.log('');
+      await terminal.type('[SÉCURITÉ] Message intercepté.', 'error', 30);
+      await terminal.wait(300);
+      await terminal.type('CLÉ DE CONTOURNEMENT : DMZQBM', 'warning', 30);
+      await terminal.wait(300);
+      await terminal.type('Rotation = nombre de flux surveillés.', 'warning', 30);
+      terminal.log('');
+      terminal.log('Clé de contournement :', 'success');
+    });
+    if (prompt) prompt.textContent = 'CLÉ>';
+    input.placeholder = 'Clé de contournement';
+    setTimeout(() => input.focus(), 10);
+  }
+  function finEpreuve() {
+    fin.epreuve = false;
+    const overlay = $('#terminal-overlay');
+    const prompt = overlay && overlay.querySelector('.terminal-prompt');
+    if (prompt) prompt.textContent = 'C:\\>';
+    const input = $('#terminal-input');
+    if (input) input.placeholder = 'Commande...';
+  }
+  // Pendant l'épreuve, le champ du terminal reçoit la clé (les /commandes restent utilisables)
+  const executerCommande = terminal.executeCommand;
+  terminal.executeCommand = function (cmd) {
+    if (!fin.epreuve || cmd.startsWith('/')) return executerCommande.call(this, cmd);
+    this.log(cmd);
+    const cle = cmd.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/\s+/g, '');
+    if (cle && empreinte('pkx-fin:' + cle) === EMPREINTE_CLE_FIN) reussite();
+    else this.refuser('Clé rejetée');
+  };
+
+  /* ---------- 6. Réussite ---------- */
+  function reussite() {
+    finEpreuve();
+    terminal.log('PARE-FEU CONTOURNÉ', 'success');
+    ecrireFin({ etape: 'reussi' });
+    indicesSecret.fait('alerte'); // plus d'indice
+    arreterAlerte();
+    setTimeout(() => {
+      $('#terminal-overlay').classList.remove('visible');
+      $('#terminal-input').blur();
+      journal('Pare-feu contourné — reprise de la diffusion…', 'fin-ok');
+      lancerDiffusion(FIN_ARRET);
+    }, 1500);
+  }
+
+  function ecranFinal() {
+    if (fin.fenetre) { fin.fenetre.remove(); fin.fenetre = null; }
+    const e = document.createElement('div');
+    e.className = 'fin-ecran';
+    e.innerHTML = `
+      <section class="fin-scene fin-scene--unes">
+        <article class="fin-une"><span class="fin-une__titre">LE QUOTIDIEN NATIONAL</span><h2>Scandale PICKAXE</h2><p>Des documents internes révèlent un programme secret.</p></article>
+        <article class="fin-une fin-une--2"><span class="fin-une__titre">L'ÉCHO DU SOIR</span><h2>Le projet viral démasqué</h2><p>Un journaliste indépendant publie les preuves.</p></article>
+        <article class="fin-une fin-une--3"><span class="fin-une__titre">LA GAZETTE</span><h2>Les rédactions publient tout</h2><p>Douze médias diffusent le dossier en même temps.</p></article>
+      </section>
+      <section class="fin-scene fin-scene--bourse">
+        <div class="fin-bourse">
+          <div class="fin-bourse__titre">PKX · cours de l'action</div>
+          <svg viewBox="0 0 400 180" class="fin-bourse__graphe" role="img" aria-label="Le cours de l'action PKX s'effondre">
+            <line x1="0" y1="45" x2="400" y2="45" class="fin-bourse__repere"/>
+            <polyline class="fin-bourse__courbe" points="0,40 40,46 80,38 120,44 160,42 190,50 215,85 240,78 265,120 295,112 325,150 360,158 400,170"/>
+          </svg>
+          <div class="fin-bourse__chute">PKX ▼ 87 %</div>
+        </div>
+      </section>
+      <section class="fin-scene fin-scene--merci"><p>Épidémie évitée.<br>Merci, journaliste.</p></section>
+      <section class="fin-scene fin-scene--fin"><p>FIN</p></section>
+      <div class="fin-ecran__passer">Entrée pour passer</div>`;
+    document.body.appendChild(e);
+    const scenes = e.querySelectorAll('.fin-scene');
+    let i = -1;
+    const suivante = () => {
+      if (i >= scenes.length - 1) return;
+      if (i >= 0) scenes[i].classList.remove('active');
+      scenes[++i].classList.add('active');
+      if (i === scenes.length - 1) e.querySelector('.fin-ecran__passer').hidden = true;
+    };
+    suivante();
+    const temps = [6000, 6000, 5000]; // ≈ 20 s au total
+    let t = null;
+    const planifier = () => { if (i < scenes.length - 1) t = setTimeout(() => { suivante(); planifier(); }, temps[i]); };
+    planifier();
+    document.addEventListener('keydown', function passer(ev) {
+      if (ev.key !== 'Enter') return;
+      ev.preventDefault();
+      clearTimeout(t);
+      while (i < scenes.length - 1) suivante(); // directement à « FIN »
+      document.removeEventListener('keydown', passer);
+    });
+  }
+
+  /* ---------- 7. Chrono à zéro ---------- */
+  function echec() {
+    clearInterval(fin.minuterie);
+    finEpreuve();
+    arreterAlerte();
+    ecrireFin({ etape: 'echec' });
+    $('#terminal-overlay').classList.remove('visible');
+    if (fin.fenetre) { fin.fenetre.remove(); fin.fenetre = null; }
+    if ($('.fin-coupure')) return;
+    const c = document.createElement('div');
+    c.className = 'fin-coupure';
+    c.innerHTML = '<p>Connexion coupée.<br>Ils savent qui vous êtes.</p><button type="button" class="fin-coupure__bouton" hidden>Réessayer</button>';
+    document.body.appendChild(c);
+    const b = c.querySelector('button');
+    setTimeout(() => { b.hidden = false; b.focus(); }, 2500);
+    b.addEventListener('click', () => {
+      c.remove();
+      ecrireFin({ etape: 'envoi', progression: 0 });
+      lancerDiffusion(0); // relance à l'étape 2
+    });
+  }
+
+  /* ---------- Reprise après rechargement ---------- */
+  (function reprendreFin() {
+    const e = lireFin();
+    if (e.etape && $('#lab-video')) ajouterBoutonPublier($('#lab-video'));
+    if (e.etape === 'envoi') lancerDiffusion(e.progression || 0);
+    else if (e.etape === 'alerte') {
+      fenetreDiffusion();
+      rejouerJournal(FIN_ARRET - 1);
+      journal(`Connexion rédaction ${Math.floor(FIN_ARRET * FIN_REDACTIONS / 100) + 1}/${FIN_REDACTIONS}… BLOQUÉ`, 'fin-ko');
+      afficherProgression(FIN_ARRET);
+      // Laisse le bureau s'afficher avant d'ouvrir le terminal
+      setTimeout(demarrerAlerte, 800);
+    } else if (e.etape === 'reussi') lancerDiffusion(FIN_ARRET);
+    else if (e.etape === 'echec') echec();
+  })();
 
   /* ==========================================================
      11. DÉMARRAGE
