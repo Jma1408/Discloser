@@ -581,9 +581,9 @@ window.addEventListener('pageshow', function (event) {
   // Ajouter une photo : déposer site_secret/labo/photo0XX.jpg,
   // puis ajouter son numéro (ex. 12) dans « disponibles ». Sinon : placeholder, aucune requête.
   const GALERIE = {
-    total: 100,
+    total: 90,
     chemin: n => `labo/photo${String(n).padStart(3, '0')}.jpg`,
-    disponibles: Array.from({ length: 85 }, (_, i) => i + 1) // photos 1 à 85
+    disponibles: Array.from({ length: 90 }, (_, i) => i + 1) // photos 1 à 90
   };
   let currentPhotoIndex = 0;
   const totalPhotos = GALERIE.total;
