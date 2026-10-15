@@ -2862,3 +2862,74 @@ Plus d'informations lors de la prochaine réunion de coordination.`
 
   majScrollbar();
 })();
+/* ---------- MENU DE DEBUG (Cmd/Ctrl+Shift+B, ou ?debug=1 dans l'URL) ----------
+   Même bloc dans les 3 sites. « Tout réinitialiser » efface tout le stockage
+   (localStorage + sessionStorage) de CE site, puis recharge la page. */
+(function () {
+  var panneau = null, armement = null;
+  var BOUTON = 'font:inherit;cursor:pointer;background:#031;color:#9f9;border:1px solid #3a3;padding:4px 10px';
+  function cles() {
+    var liste = [];
+    try { for (var i = 0; i < localStorage.length; i++) liste.push('local · ' + localStorage.key(i)); } catch (e) { /* indisponible */ }
+    try { for (var k = 0; k < sessionStorage.length; k++) liste.push('session · ' + sessionStorage.key(k)); } catch (e) { /* indisponible */ }
+    return liste.sort();
+  }
+  function majListe() {
+    var ul = panneau.querySelector('.dbg-cles');
+    ul.innerHTML = '';
+    var l = cles();
+    if (!l.length) l = ['(aucune clé)'];
+    l.forEach(function (c) { var li = document.createElement('li'); li.textContent = c; ul.appendChild(li); });
+  }
+  function ouvrir() {
+    if (!panneau) {
+      panneau = document.createElement('div');
+      panneau.setAttribute('role', 'dialog');
+      panneau.setAttribute('aria-label', 'Debug');
+      panneau.style.cssText = 'position:fixed;right:12px;bottom:12px;z-index:2147483000;width:min(340px,calc(100vw - 24px));max-height:70vh;overflow:auto;box-sizing:border-box;background:#000;color:#9f9;border:1px solid #3a3;padding:10px 12px;font:12px/1.45 Menlo,Consolas,"Courier New",monospace;text-align:left;box-shadow:0 4px 18px rgba(0,0,0,.6)';
+      panneau.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><strong>DEBUG</strong>' +
+        '<button type="button" class="dbg-fermer" aria-label="Fermer" style="' + BOUTON + ';padding:0 6px">✕</button></div>' +
+        '<button type="button" class="dbg-reset" style="' + BOUTON + '">Tout réinitialiser</button>' +
+        '<div style="margin:10px 0 4px;color:#7a7">Clés stockées :</div>' +
+        '<ul class="dbg-cles" style="margin:0;padding-left:16px;word-break:break-all"></ul>' +
+        '<p style="margin:10px 0 0;color:#cc6">Le reset ne concerne que ce site : répéter sur les 2 autres.</p>';
+      document.body.appendChild(panneau);
+      panneau.querySelector('.dbg-fermer').addEventListener('click', fermer);
+      var reset = panneau.querySelector('.dbg-reset');
+      reset.addEventListener('click', function () {
+        // Confirmation dans le panneau (confirm() peut être bloqué dans un artefact)
+        if (!armement) {
+          reset.textContent = 'Confirmer la réinitialisation ?';
+          reset.style.background = '#400';
+          reset.style.color = '#f99';
+          armement = setTimeout(function () {
+            armement = null;
+            reset.textContent = 'Tout réinitialiser';
+            reset.style.background = '#031';
+            reset.style.color = '#9f9';
+          }, 4000);
+          return;
+        }
+        try { localStorage.clear(); } catch (e) { /* indisponible */ }
+        try { sessionStorage.clear(); } catch (e) { /* indisponible */ }
+        location.reload();
+      });
+    }
+    panneau.hidden = false;
+    majListe();
+  }
+  function fermer() { if (panneau) panneau.hidden = true; }
+  document.addEventListener('keydown', function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyB') {
+      e.preventDefault();
+      if (panneau && !panneau.hidden) fermer(); else ouvrir();
+    } else if (e.key === 'Escape' && panneau && !panneau.hidden) {
+      e.stopImmediatePropagation(); // Échap ferme seulement le panneau
+      fermer();
+    }
+  }, true);
+  if (new URLSearchParams(location.search).get('debug') === '1') {
+    if (document.body) ouvrir(); else document.addEventListener('DOMContentLoaded', ouvrir);
+  }
+})();
