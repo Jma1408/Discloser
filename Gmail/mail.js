@@ -26,7 +26,7 @@ const INDICES = [
 const TEXTE_FIN_MAIL = "[SCRIPT / CODE À INSÉRER ICI]";
 
 // Liens des pièces jointes du mail principal
-const LIEN_PIECE_JOINTE_PDF = "in-progress.html";
+const LIEN_PIECE_JOINTE_PDF = "document-seb.html";
 const LIEN_PIECE_JOINTE_VIDEO = "[LIEN YOUTUBE]";
 
 // Clés de sauvegarde dans le localStorage
