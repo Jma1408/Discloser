@@ -497,3 +497,37 @@ html.theme-sombre .no-result { color: #777; }
   #doc-seb .doc-seb-page { padding: 0; }
   #doc-seb .feuille { transform: none; box-shadow: none; max-width: none; min-height: 0; zoom: 1 !important; animation: none; }
 }
+
+/* =====================================================================
+   MOBILE (≤ 700 px) : une colonne à la fois — liste, puis mail en plein
+   écran avec bouton retour. Rien ne change sur ordinateur.
+   ===================================================================== */
+@media (max-width: 700px) {
+  body { flex-direction: column; gap: 8px; padding: 8px; height: 100dvh; }
+  .main { flex: 0 0 auto; min-height: 0; gap: 8px; order: -1; } /* recherche en haut */
+  .sidebar, .sidebar.collapsed { width: 100%; min-width: 0; flex: 1; min-height: 0; padding: 10px 12px 0; border-radius: 14px; }
+  .sidebar.collapsed .mail-list { margin: 0; padding: 0 0 14px; }
+  .reader { display: none; }
+  body.mail-ouvert .sidebar { display: none; }
+  body.mail-ouvert .main { flex: 1; }
+  body.mail-ouvert .reader { display: block; border-radius: 14px; }
+  .reader-content { padding: 22px 16px 40px; }
+  .reader-actions { margin: -8px 0 12px -6px; }
+  .reader-actions button { min-width: 44px; min-height: 44px; }
+
+  .topbar { gap: 8px; padding: 0; }
+  .search-box { height: 44px; padding: 0 12px; gap: 8px; min-width: 0; flex: 1; }
+  .search-box svg { width: 20px; height: 20px; flex: none; }
+  .search-box input { font-size: 16px; min-width: 0; height: 100%; }
+  .topbar-actions { gap: 4px; padding-right: 0; flex: none; }
+  .topbar-actions .icon-btn, .topbar-actions .avatar-btn { width: 44px; height: 44px; }
+  .topbar-actions svg { width: 32px; height: 32px; }
+  .avatar-btn svg { width: 40px; height: 40px; }
+  .dropdown { right: 0; max-width: calc(100vw - 16px); }
+  .dropdown-item { min-height: 44px; }
+
+  .attachment { min-height: 44px; }
+  #doc-seb .doc-seb-btn, #doc-seb .imprimer { height: 44px; min-width: 44px; }
+  #doc-seb .doc-seb-zoom { min-width: 40px; }
+  #doc-seb .doc-seb-nom { font-size: 14px; }
+}

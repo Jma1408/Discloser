@@ -873,6 +873,15 @@ window.addEventListener('pageshow', function (event) {
 
     // L'image tient entièrement dans la zone visible (hauteur calculée, sans défilement)
     const cadre = $('.gallery-image-frame');
+    // Écran tactile : balayage gauche / droite pour changer de photo
+    let toucheX = null, toucheY = null;
+    cadre.addEventListener('touchstart', (e) => { toucheX = e.touches[0].clientX; toucheY = e.touches[0].clientY; }, { passive: true });
+    cadre.addEventListener('touchend', (e) => {
+      if (toucheX === null) return;
+      const dx = e.changedTouches[0].clientX - toucheX, dy = e.changedTouches[0].clientY - toucheY;
+      toucheX = null;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) (dx < 0 ? nextBtn : prevBtn).click();
+    });
     const ajusterCadre = () => {
       const zone = cadre.closest('.content');
       if (!zone || !cadre.offsetParent) return;
@@ -1624,6 +1633,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
 
   titlebar.addEventListener('mousedown', (e) => {
     if (e.target.closest('.titlebar-buttons') || maximisee) return;
+    if (window.matchMedia('(max-width: 700px)').matches) return; // mobile : fenêtre fixe
     const r = fenetre.getBoundingClientRect();
     drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
     e.preventDefault();
@@ -2791,7 +2801,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       </section>
       <section class="fin-scene fin-scene--merci"><p>Épidémie évitée.<br>Merci, journaliste.</p></section>
       <section class="fin-scene fin-scene--fin"><p>FIN</p></section>
-      <div class="fin-ecran__passer">Entrée pour passer</div>`;
+      <div class="fin-ecran__passer">${window.matchMedia('(pointer: coarse)').matches ? 'Touchez pour passer' : 'Entrée pour passer'}</div>`;
     document.body.appendChild(e);
     const scenes = e.querySelectorAll('.fin-scene');
     let i = -1;
@@ -2806,13 +2816,18 @@ Plus d'informations lors de la prochaine réunion de coordination.`
     let t = null;
     const planifier = () => { if (i < scenes.length - 1) t = setTimeout(() => { suivante(); planifier(); }, temps[i]); };
     planifier();
-    document.addEventListener('keydown', function passer(ev) {
-      if (ev.key !== 'Enter') return;
-      ev.preventDefault();
+    const passerTout = () => {
       clearTimeout(t);
       while (i < scenes.length - 1) suivante(); // directement à « FIN »
       document.removeEventListener('keydown', passer);
-    });
+    };
+    function passer(ev) {
+      if (ev.key !== 'Enter') return;
+      ev.preventDefault();
+      passerTout();
+    }
+    document.addEventListener('keydown', passer);
+    e.addEventListener('click', passerTout); // écran tactile : toucher pour passer
   }
 
   /* ---------- 7. Chrono à zéro ---------- */
@@ -2851,6 +2866,82 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       setTimeout(demarrerAlerte, 800);
     } else if (e.etape === 'reussi') lancerDiffusion(FIN_ARRET);
     else if (e.etape === 'echec') echec();
+  })();
+
+  /* ==========================================================
+     10 ter. MOBILE : clavier virtuel ⌨ (écran tactile seulement)
+     et terminal calé au-dessus du clavier du téléphone.
+     Le joueur compose lui-même la combinaison (ex. Ctrl, Shift, D) :
+     même effet que le vrai raccourci. Aucune touche directe.
+     ========================================================== */
+  (function mobile() {
+    // Hauteur visible réelle (clavier du téléphone ouvert) → terminal au-dessus
+    const vv = window.visualViewport;
+    if (vv) {
+      const majVue = () => {
+        document.documentElement.style.setProperty('--vvh', vv.height + 'px');
+        document.documentElement.style.setProperty('--vv-haut', vv.offsetTop + 'px');
+        const corps = $('#terminal-body');
+        if (corps) corps.scrollTop = corps.scrollHeight;
+      };
+      vv.addEventListener('resize', majVue);
+      vv.addEventListener('scroll', majVue);
+      majVue();
+    }
+
+    if (!window.matchMedia('(pointer: coarse)').matches) return;
+
+    const panneau = document.createElement('div');
+    panneau.className = 'vk-panneau';
+    panneau.hidden = true;
+    panneau.setAttribute('role', 'group');
+    panneau.setAttribute('aria-label', 'Clavier virtuel');
+    panneau.innerHTML =
+      '<div class="vk-ligne">' +
+      ['Ctrl', 'Shift', 'Alt'].map((m) => `<button type="button" class="vk-touche" data-mod="${m}">${m}</button>`).join('') +
+      '<button type="button" class="vk-touche vk-fermer" aria-label="Fermer le clavier">✕</button></div>' +
+      '<div class="vk-lettres">' +
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((l) => `<button type="button" class="vk-touche" data-lettre="${l}">${l}</button>`).join('') +
+      '</div>';
+    document.body.appendChild(panneau);
+
+    const mods = { Ctrl: false, Shift: false, Alt: false };
+    const majMods = () => panneau.querySelectorAll('[data-mod]').forEach((b) => b.classList.toggle('actif', mods[b.dataset.mod]));
+    const fermer = () => { panneau.hidden = true; Object.keys(mods).forEach((k) => { mods[k] = false; }); majMods(); };
+    const basculer = () => { if (panneau.hidden) panneau.hidden = false; else fermer(); };
+
+    // Garde le focus là où il est (pas d'ouverture du clavier du téléphone)
+    panneau.addEventListener('mousedown', (e) => e.preventDefault());
+    panneau.addEventListener('click', (e) => {
+      const b = e.target.closest('.vk-touche');
+      if (!b) return;
+      if (b.classList.contains('vk-fermer')) { fermer(); return; }
+      if (b.dataset.mod) { mods[b.dataset.mod] = !mods[b.dataset.mod]; majMods(); return; }
+      const l = b.dataset.lettre;
+      const combinaison = mods.Ctrl || mods.Shift || mods.Alt;
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: mods.Shift ? l : l.toLowerCase(), code: 'Key' + l,
+        ctrlKey: mods.Ctrl, shiftKey: mods.Shift, altKey: mods.Alt, bubbles: true, cancelable: true
+      }));
+      if (combinaison) fermer(); // une combinaison composée : le clavier se referme
+    });
+
+    // Icône ⌨ discrète dans la barre des tâches… et dans le terminal (qui couvre l'écran)
+    const ajouterIcone = (parent, avant, classe) => {
+      if (!parent) return;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'vk-btn' + (classe ? ' ' + classe : '');
+      b.textContent = '⌨';
+      b.setAttribute('aria-label', 'Clavier');
+      b.addEventListener('mousedown', (e) => e.preventDefault());
+      b.addEventListener('click', basculer);
+      parent.insertBefore(b, avant);
+    };
+    const tray = $('.taskbar-tray');
+    if (tray) ajouterIcone(tray, tray.firstChild);
+    const barreTerminal = $('#terminal-overlay .terminal-titlebar');
+    if (barreTerminal) ajouterIcone(barreTerminal, $('#terminal-close'), 'vk-btn--terminal');
   })();
 
   /* ==========================================================

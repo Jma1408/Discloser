@@ -429,6 +429,7 @@ function ouvrirMail(id) {
   if (!m) return;
 
   mailSelectionne = id;
+  document.body.classList.add("mail-ouvert"); // mobile : le mail passe en plein écran
 
   // Marque comme lu + sauvegarde + compteur
   if (!m.lu) {
@@ -594,6 +595,7 @@ document.querySelectorAll(".dropdown-item").forEach((bouton) => {
 /* ---------- ACTIONS DU MAIL OUVERT ---------- */
 function fermerMail() {
   mailSelectionne = null;
+  document.body.classList.remove("mail-ouvert");
   elLecteur.hidden = true;
   elLecteur.innerHTML = "";
   elVide.style.display = "";

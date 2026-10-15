@@ -807,3 +807,49 @@ html.pkx-sortie body { opacity: 0; transition: opacity .25s ease; }
   .fiche-lot__champs { grid-template-columns: 1fr; gap: 2px; }
   .fiche-lot__champs dd { margin-bottom: 8px; }
 }
+
+/* =====================================================================
+   MOBILE (≤ 700 px) : menu lisible, cibles tactiles ≥ 44 px, textes ≥ 14 px,
+   assistance en bulle (plein écran à l'ouverture), pipeline en cartes.
+   Rien ne change sur ordinateur.
+   ===================================================================== */
+@media (max-width: 700px) {
+  .header__logo img { height: 64px; }
+  .nav { max-width: 100%; }
+  .nav__l1, .nav__l2 { flex-wrap: wrap; row-gap: 0; }
+  .nav__l1 li { font-size: 20px; padding: 0 14px; }
+  .nav__l1 li.nav__small { display: none; }
+  .nav__l2 li { font-size: 15px; padding: 0 12px; }
+  .nav__l1 a, .nav__l2 a { display: inline-flex; align-items: center; min-height: 44px; }
+  .nav a.actif { padding-bottom: 0; }
+  .btn-connexion { min-height: 44px; }
+  .banner__right { min-height: 44px; }
+  .fil { font-size: 14px; }
+  .fil a { display: inline-flex; align-items: center; min-height: 44px; }
+  .footer__links a { display: inline-flex; align-items: center; min-height: 44px; }
+
+  /* Assistance : bulle ronde dans le coin, panneau plein écran une fois ouvert */
+  .assistance__bouton { width: 56px; height: 56px; padding: 0; font-size: 0; }
+  .assistance__bouton > span:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .assistance__bouton::before { content: "?"; font-size: 26px; line-height: 56px; }
+  .assistance__panneau { position: fixed; inset: 0; z-index: 1000; width: 100%; max-width: none; max-height: none; border-radius: 0; }
+  .assistance__tete { padding: 6px 8px 6px 16px; font-size: 16px; }
+  .assistance__fermer { min-width: 44px; min-height: 44px; font-size: 20px; }
+  .assistance__msg strong { font-size: 14px; }
+
+  /* Pipeline : une carte par composé (nom, aire thérapeutique, phase + barre) */
+  .tableau-defile { overflow: visible; }
+  .pipeline, .pipeline tbody, .pipeline tr, .pipeline td { display: block; }
+  .pipeline { min-width: 0; box-shadow: none !important; font-size: 15px; }
+  .pipeline thead { display: none; }
+  .pipeline tr {
+    display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center;
+    padding: 14px 16px; margin-bottom: 12px; background: var(--blanc);
+    border: 1px solid var(--gris-clair); border-left: 4px solid var(--jaune); border-radius: 6px;
+  }
+  .pipeline td { padding: 0; border: none; }
+  .pipeline td:nth-child(1) { grid-column: 1; grid-row: 1; font-size: 17px; }
+  .pipeline td:nth-child(4) { grid-column: 2; grid-row: 1; font-weight: bold; }
+  .pipeline td:nth-child(2) { grid-column: 1 / -1; grid-row: 2; color: #555; }
+  .pipeline td:nth-child(3) { grid-column: 1 / -1; grid-row: 3; width: auto; padding-top: 4px; }
+}

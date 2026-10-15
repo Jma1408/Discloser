@@ -179,3 +179,18 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   .messages { right: 12px; bottom: 12px; }
   .messages__bouton span:not(.messages__badge) { display: none; }
 }
+
+/* =====================================================================
+   MOBILE (≤ 700 px) : cibles tactiles ≥ 44 px, bulle de messages en plein
+   écran à l'ouverture. Rien ne change sur ordinateur.
+   ===================================================================== */
+@media (max-width: 700px) {
+  .nav-btn { min-width: 44px; min-height: 44px; }
+  .experience__entreprise a { display: inline-flex; align-items: center; min-height: 44px; }
+  .messages__bouton { min-height: 48px; }
+  .messages__panneau { position: fixed; inset: 0; z-index: 60; width: 100%; max-width: none; max-height: none; border-radius: 0; }
+  .messages__tete { padding: 6px 8px 6px 16px; font-size: 16px; }
+  .messages__fermer { min-width: 44px; min-height: 44px; font-size: 20px; }
+  .messages__vide, .messages__texte { font-size: 15px; }
+  .nav-btn--cta span { font-size: 14px; }
+}
