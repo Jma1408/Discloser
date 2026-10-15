@@ -27,16 +27,6 @@ const INDICES_SECRET = [
     actif: false // l'indice couleur du Laboratoire n'existe pas encore
   },
   {
-    id: "decryptage",
-    apres: "terminal",
-    action: "décrypter les documents d'Informations",
-    delaiMin: 7,
-    expediteur: "Marc (Support IT)",
-    sujet: "Re : documents illisibles",
-    texte: "Encore des tickets pour des documents d'Informations « illisibles »… Ils ne sont pas cassés, ils sont chiffrés. Le terminal a un raccourci pour ça, comme tout le reste il est indiqué dans l'aide.",
-    actif: true
-  },
-  {
     id: "donnees",
     apres: "decryptage",
     action: "déverrouiller l'onglet Données",
