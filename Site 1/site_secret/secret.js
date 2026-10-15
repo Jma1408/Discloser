@@ -49,6 +49,91 @@ const INDICES_SECRET = [
 ];
 
 /* =====================================================================
+   CHARGEMENT DES MÉDIAS (vidéos, son) — compatible Safari
+   fetch → blob → URL locale posée sur l'élément. Les blobs restent en
+   cache (pas de nouveau téléchargement) ; les URL locales des lecteurs
+   sont libérées (revokeObjectURL) quand le lecteur est fermé.
+   Options : zone (élément où afficher les messages, défaut : parent),
+   lancer (lecture auto, bouton ▶ si bloquée), surErreur (remplace le
+   message d'erreur par défaut).
+   ===================================================================== */
+const CACHE_MEDIAS = new Map(); // chemin → promesse du blob
+
+function blobMedia(chemin) {
+  if (!CACHE_MEDIAS.has(chemin)) {
+    const type = /\.mp3$/i.test(chemin) ? 'audio/mpeg' : 'video/mp4';
+    const promesse = fetch(chemin)
+      .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
+      .then((b) => (b.type ? b : new Blob([b], { type })));
+    promesse.catch(() => CACHE_MEDIAS.delete(chemin)); // échec : on pourra réessayer
+    CACHE_MEDIAS.set(chemin, promesse);
+  }
+  return CACHE_MEDIAS.get(chemin);
+}
+
+/** Libère l'URL locale d'un lecteur (le blob reste en cache) */
+function libererMedia(el) {
+  if (el && el._urlMedia) { URL.revokeObjectURL(el._urlMedia); el._urlMedia = null; }
+}
+
+/** Message / bouton par-dessus le lecteur */
+function messageMedia(zone, classe, texte, bouton, action) {
+  zone.classList.add('media-zone');
+  const div = document.createElement('div');
+  div.className = 'media-etat ' + classe;
+  const p = document.createElement('span');
+  p.textContent = texte;
+  div.appendChild(p);
+  if (bouton) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'media-etat__bouton';
+    b.textContent = bouton;
+    b.addEventListener('click', (e) => { e.stopPropagation(); div.remove(); action(); });
+    div.appendChild(b);
+  }
+  zone.appendChild(div);
+  return div;
+}
+
+/** Lecture ; si le navigateur la bloque, gros bouton ▶ « Lancer le flux » */
+function lireMedia(el, zone) {
+  const p = el.play();
+  if (p && p.catch) {
+    p.catch(() => {
+      if (!el.isConnected || zone.querySelector('.media-etat--lancer')) return;
+      messageMedia(zone, 'media-etat--lancer', '', '▶ Lancer le flux', () => lireMedia(el, zone));
+    });
+  }
+}
+
+function chargerMedia(el, chemin, options = {}) {
+  const zone = options.zone || el.parentElement;
+  if (el.tagName === 'VIDEO') {
+    el.muted = true;
+    el.playsInline = true;
+    el.setAttribute('playsinline', '');
+    el.setAttribute('webkit-playsinline', '');
+    el.preload = 'metadata';
+  }
+  const erreur = () => {
+    zone.querySelectorAll('.media-etat').forEach((m) => m.remove());
+    if (options.surErreur) { options.surErreur(); return; }
+    messageMedia(zone, 'media-etat--erreur', 'Flux indisponible — réessayer', '↻ Relancer', () => chargerMedia(el, chemin, options));
+  };
+  const attente = messageMedia(zone, 'media-etat--attente', 'Chargement du flux…');
+  return blobMedia(chemin).then((blob) => {
+    attente.remove();
+    if (!el.isConnected) return;
+    libererMedia(el);
+    el._urlMedia = URL.createObjectURL(blob);
+    el.onerror = erreur; // fichier illisible : même message
+    el.src = el._urlMedia;
+    if (options.lancer) lireMedia(el, zone);
+  }).catch(erreur);
+}
+
+/* =====================================================================
    GARDE-FOU (anti-triche léger)
    Passer GARDE_FOU_ACTIF à false pendant tes tests pour accéder
    directement à ce site sans passer par la connexion.
@@ -859,7 +944,7 @@ window.addEventListener('pageshow', function (event) {
           </div>
         </div>
         <div class="lab-video" id="lab-video" hidden>
-          <video id="lab-video-lecteur" controls muted preload="metadata" playsinline></video>
+          <video id="lab-video-lecteur" controls muted preload="metadata" playsinline webkit-playsinline></video>
         </div>
       </div>
 
@@ -872,7 +957,7 @@ window.addEventListener('pageshow', function (event) {
             <label class="lab-son__volume">Volume <input type="range" id="lab-son-volume" min="0" max="1" step="0.05" value="0.8"></label>
             <span class="lab-tag" id="lab-son-etat">à l'arrêt</span>
           </div>
-          <audio id="lab-son-audio" src="donnees/enigme_sonore.mp3" loop preload="metadata"></audio>
+          <audio id="lab-son-audio" loop preload="metadata"></audio>
         </div>
       </div>
     </div>
@@ -951,6 +1036,7 @@ window.addEventListener('pageshow', function (event) {
     let donnees = null;
     let anim = null;
 
+    chargerMedia(audio, 'donnees/enigme_sonore.mp3', { zone: canvas.parentElement });
     audio.volume = parseFloat(volume.value);
     volume.addEventListener('input', () => { audio.volume = parseFloat(volume.value); });
 
@@ -998,7 +1084,9 @@ window.addEventListener('pageshow', function (event) {
           analyseur.connect(contexte.destination);
         }
       }
+      // Safari : la visualisation ne démarre qu'après ce clic (resume dans le gestionnaire)
       if (contexte && contexte.state === 'suspended') contexte.resume();
+      if (!audio.getAttribute('src')) return; // son pas encore chargé
       if (audio.paused) audio.play().catch(() => {});
       else audio.pause();
     });
@@ -1059,14 +1147,8 @@ window.addEventListener('pageshow', function (event) {
     function ouvrirVideo(animation) {
       coffre.classList.add('ok');
       etat.textContent = 'ACCÈS AUTORISÉ';
-      if (!lecteur.getAttribute('src')) {
-        lecteur.onerror = () => {
-          const p = document.createElement('div');
-          p.className = 'terminal-camera__placeholder';
-          p.textContent = 'ERREUR – lecture impossible : donnees/donnees_video.mp4';
-          lecteur.replaceWith(p);
-        };
-        lecteur.src = 'donnees/donnees_video.mp4';
+      if (!lecteur.getAttribute('src') && !zoneVideo.querySelector('.media-etat')) {
+        chargerMedia(lecteur, 'donnees/donnees_video.mp4');
       }
       const montrer = () => { coffre.hidden = true; zoneVideo.hidden = false; };
       if (animation) setTimeout(montrer, 1200); else montrer();
@@ -2105,8 +2187,10 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       const contenu = this.mur.querySelector('.terminal-mur__contenu');
       contenu.querySelectorAll('video').forEach((v) => {
         v.pause();
+        v.onerror = null;
         v.removeAttribute('src');
         v.load();
+        libererMedia(v);
       });
       contenu.innerHTML = '';
       clearInterval(this.murMinuteur);
@@ -2159,12 +2243,9 @@ Plus d'informations lors de la prochaine réunion de coordination.`
         } else if (cam.disponible) {
           // Première image en aperçu
           const v = document.createElement('video');
-          v.muted = true;
-          v.playsInline = true;
-          v.preload = 'metadata';
-          v.src = cam.video + '#t=0.1';
-          v.onerror = () => { v.remove(); bruit('SIGNAL ABSENT'); };
           apercu.appendChild(v);
+          v.addEventListener('loadedmetadata', () => { v.currentTime = 0.1; }); // première image
+          chargerMedia(v, cam.video, { surErreur: () => { v.remove(); bruit('SIGNAL ABSENT'); } });
         } else {
           bruit('SIGNAL ABSENT');
         }
@@ -2208,12 +2289,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       } else if (camera.disponible) {
         video = document.createElement('video');
         video.className = 'terminal-video';
-        video.preload = 'metadata';
-        video.src = camera.video;
-        video.autoplay = true;
-        video.muted = true;
         video.loop = true;
-        video.playsInline = true;
 
         // Compteur de visionnage « 00:00:07 / 00:00:17 »
         const compteur = document.createElement('span');
@@ -2246,13 +2322,6 @@ Plus d'informations lors de la prochaine réunion de coordination.`
           son.textContent = video.muted ? '🔇 SON' : '🔊 SON';
         });
 
-        video.onerror = () => {
-          const p = placeholder();
-          p.textContent = `SIGNAL PERDU – impossible de charger ${camera.video}`;
-          video.replaceWith(p);
-          compteur.remove();
-          son.remove();
-        };
         ecran.prepend(video);
         ecran.append(compteur, son);
       } else {
@@ -2270,7 +2339,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       tic();
 
       contenu.appendChild(cadre);
-      if (video) video.play().catch(() => { video.controls = true; });
+      if (video) chargerMedia(video, camera.video, { zone: ecran, lancer: true });
     },
 
     /* ---------- Décryptage des documents (Cmd/Ctrl+Shift+X) ---------- */
