@@ -355,3 +355,96 @@ html.theme-sombre .attachment { border-color: #444; }
 html.theme-sombre .attachment:hover { background: #303134; }
 html.theme-sombre .reader-empty,
 html.theme-sombre .no-result { color: #777; }
+
+/* =====================================================================
+   DOCUMENT DE SEB (pièce jointe) : feuille A4 dans une fenêtre superposée
+   ===================================================================== */
+
+/* Feuille A4 « Word 2010 » tapée à la hâte : ambiance en CSS uniquement */
+.doc-seb-fond {
+  position: fixed; inset: 0; z-index: 500; overflow-y: auto;
+  background: rgba(20, 22, 26, .78);
+  font-family: Calibri, Carlito, Arial, Helvetica, sans-serif;
+  font-size: 11pt; line-height: 1.45; color: #1a1a1a;
+  padding: 40px 16px 60px;
+}
+.doc-seb-fond[hidden] { display: none; }
+#doc-seb .barre {
+  max-width: 210mm; margin: 0 auto 12px;
+  display: flex; justify-content: flex-end; gap: 8px;
+}
+#doc-seb .doc-seb-fermer {
+  font: 20px/1 Arial, sans-serif; color: #f2f2f2; background: transparent;
+  border: 1px solid rgba(255, 255, 255, .45); border-radius: 3px; width: 32px; height: 28px; cursor: pointer;
+}
+#doc-seb .doc-seb-fermer:hover { background: rgba(255, 255, 255, .12); }
+#doc-seb .imprimer {
+  font: 12px Arial, sans-serif; color: #f2f2f2; background: transparent;
+  border: 1px solid rgba(255, 255, 255, .45); border-radius: 3px;
+  padding: 5px 12px; cursor: pointer;
+}
+#doc-seb .imprimer:hover { background: rgba(255, 255, 255, .12); }
+
+#doc-seb .feuille {
+  position: relative; max-width: 210mm; min-height: 297mm; margin: 0 auto;
+  background: #fff; padding: 25mm 25mm 30mm;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, .28);
+  overflow: hidden;
+}
+/* Trace de pliure (feuille pliée en trois) */
+#doc-seb .feuille::before, #doc-seb .feuille::after {
+  content: ""; position: absolute; left: 0; right: 0; height: 18px; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, .045) 48%, rgba(255, 255, 255, .7) 52%, rgba(0, 0, 0, 0));
+}
+#doc-seb .feuille::before { top: 33%; }
+#doc-seb .feuille > * { position: relative; z-index: 1; }
+#doc-seb .feuille::after { top: 66%; opacity: .6; }
+
+#doc-seb .entete {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  font-variant: small-caps; letter-spacing: .06em; color: #8a8a8a; font-size: 10pt;
+  border-bottom: 1px solid #d9d9d9; padding-bottom: 6px; margin-bottom: 28px;
+}
+#doc-seb .entete .date { font-variant: normal; letter-spacing: 0; }
+
+#doc-seb p { margin: 0 0 10pt; }
+#doc-seb .surligne { background: #fff200; padding: 0 1px; }
+#doc-seb ul { margin: 0 0 12pt; padding-left: 22px; }
+#doc-seb li { margin-bottom: 3pt; }
+#doc-seb a { color: #0563c1; }
+
+#doc-seb table.phonetique {
+  border-collapse: collapse; margin: 4pt 0 6pt; font-size: 10pt;
+}
+#doc-seb table.phonetique td { border: 1px solid #bfbfbf; padding: 2px 10px; }
+#doc-seb table.phonetique td.lettre { font-weight: bold; text-align: center; width: 26px; background: #f2f2f2; }
+
+#doc-seb .signature { margin-top: 18pt; }
+
+/* Annotation manuscrite dans la marge */
+#doc-seb .feuille > .avec-note { position: relative; }
+#doc-seb .note-manuscrite {
+  position: absolute; right: -24mm; bottom: -2px; width: auto;
+  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", "Chalkboard SE", cursive;
+  font-size: 10.5pt; color: #1f4fbf; transform: rotate(-8deg); white-space: nowrap;
+}
+#doc-seb .note-manuscrite::before {
+  content: "←"; display: inline-block; margin-right: 4px; transform: rotate(10deg);
+}
+
+@media (max-width: 760px) {
+  .doc-seb-fond { padding: 16px 10px 40px; }
+  #doc-seb .feuille { min-height: 0; padding: 22px 18px 30px; }
+  #doc-seb .entete { flex-direction: column; gap: 4px; }
+  #doc-seb .note-manuscrite { position: static; display: block; margin: 6px 0 0 30px; width: auto; }
+  #doc-seb .note-manuscrite::before { content: "↑"; }
+  #doc-seb table.phonetique { font-size: 9.5pt; }
+  #doc-seb table.phonetique td { padding: 2px 6px; }
+}
+@media print {
+  body.doc-seb-impression > *:not(#doc-seb) { display: none !important; }
+  .doc-seb-fond { position: static; background: #fff; padding: 0; overflow: visible; }
+  #doc-seb .barre { display: none; }
+  #doc-seb .feuille { box-shadow: none; max-width: none; min-height: 0; }
+}
+  

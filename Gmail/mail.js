@@ -25,8 +25,11 @@ const INDICES = [
 // Texte affiché dans le bloc de fin du mail principal (#script-fin-mail)
 const TEXTE_FIN_MAIL = "[SCRIPT / CODE À INSÉRER ICI]";
 
-// Liens des pièces jointes du mail principal
-const LIEN_PIECE_JOINTE_PDF = "document-seb.html";
+// Pièces jointes du mail principal
+// Document : s'affiche dans la messagerie (fenêtre superposée #doc-seb).
+// Vidéo : remplacer par l'URL complète (https://…) quand elle sera en ligne ;
+// tant qu'elle commence par "[", un message s'affiche à la place.
+const LIEN_PIECE_JOINTE_PDF = "#doc-seb";
 const LIEN_PIECE_JOINTE_VIDEO = "[LIEN YOUTUBE]";
 
 // Clés de sauvegarde dans le localStorage
@@ -471,7 +474,7 @@ function ouvrirMail(id) {
       <div class="attachments-list">`;
     m.pieces_jointes.forEach((pj) => {
       html += `
-        <a class="attachment" href="${echapper(pj.lien)}" target="_blank" rel="noopener">
+        <a class="attachment" data-type="${pj.type}" href="${echapper(pj.lien)}"${/^https?:\/\//.test(pj.lien) ? ' target="_blank" rel="noopener"' : ""}>
           ${iconePieceJointe(pj.type)}
           <div>
             <div class="attachment-name">${echapper(pj.nom)}</div>
@@ -603,10 +606,13 @@ elLecteur.addEventListener("click", (e) => {
   const pj = e.target.closest(".attachment");
   if (pj) {
     indices.fait("pieces-jointes"); // action attendue faite : plus d'indice
-    const lien = pj.getAttribute("href");
-    if (!lien || lien.startsWith("[") || lien === "in-progress.html") {
+    const lien = pj.getAttribute("href") || "";
+    if (pj.dataset.type === "pdf") {          // document : fenêtre superposée
       e.preventDefault();
-      afficherToast("Pièce jointe indisponible pour le moment");
+      ouvrirDocument();
+    } else if (!/^https?:\/\//.test(lien)) {   // vidéo pas encore en ligne
+      e.preventDefault();
+      afficherToast("Vidéo en cours de mise en ligne");
     }
     return;
   }
@@ -721,6 +727,29 @@ const indices = moteurIndices(CLE_INDICES, INDICES, (ind, date, nouveau) => {
     afficherListe();
     afficherToast("Nouveau message");
   }
+});
+
+/* ---------- DOCUMENT DE SEB (fenêtre superposée) ---------- */
+const elDocument = $("doc-seb");
+function ouvrirDocument() {
+  elDocument.hidden = false;
+  elDocument.scrollTop = 0;
+  document.body.style.overflow = "hidden";
+  $("doc-seb-fermer").focus();
+}
+function fermerDocument() {
+  elDocument.hidden = true;
+  document.body.style.overflow = "";
+}
+$("doc-seb-fermer").addEventListener("click", fermerDocument);
+elDocument.addEventListener("click", (e) => { if (e.target === elDocument) fermerDocument(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !elDocument.hidden) fermerDocument();
+});
+$("doc-seb-imprimer").addEventListener("click", () => {
+  document.body.classList.add("doc-seb-impression");
+  window.print();
+  document.body.classList.remove("doc-seb-impression");
 });
 
 /* ---------- BOUTON CACHÉ DE RESET (tests) ---------- */
