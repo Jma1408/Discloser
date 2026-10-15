@@ -1,0 +1,340 @@
+/* ==========================================================
+   mail.css - Style de la boîte mail (inspiration Gmail)
+   ========================================================== */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: Roboto, Arial, Helvetica, sans-serif;
+  background: #F1F1F1;
+  color: #202124;
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  gap: 14px;
+  padding: 10px;
+}
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+a { color: inherit; text-decoration: none; }
+
+/* ---------- Colonne gauche ---------- */
+.sidebar {
+  width: 380px;
+  min-width: 380px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  padding: 14px 18px 0;
+  overflow: hidden;
+  transition: width 0.3s ease, min-width 0.3s ease, padding 0.3s ease;
+}
+
+.hamburger {
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  margin-bottom: 18px;
+  transition: background 0.2s;
+}
+.hamburger:hover { background: #eee; }
+
+.compose-btn {
+  display: flex; align-items: center; gap: 22px;
+  background: #82b6e4;
+  border-radius: 14px;
+  padding: 24px 24px;
+  font-size: 28px;
+  color: #111;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition: box-shadow 0.2s, transform 0.15s, background 0.2s;
+  white-space: nowrap;
+}
+.compose-btn:hover { box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); background: #76aedf; }
+.compose-btn:active { transform: scale(0.98); }
+
+.inbox-entry {
+  display: flex; align-items: center; gap: 16px;
+  padding: 26px 4px 12px;
+  font-size: 19px;
+  white-space: nowrap;
+}
+.inbox-label { flex: 1; }
+.unread-count {
+  background: #1a73e8;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+}
+.unread-count.zero { background: #d0d4d9; color: #555; }
+
+/* ---------- Liste des mails ---------- */
+.mail-list {
+  flex: 1;
+  overflow-y: auto;
+  margin: 0 -18px;
+  padding: 0 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mail-list::-webkit-scrollbar { width: 8px; }
+.mail-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+
+.mail-card {
+  display: flex; gap: 12px;
+  padding: 12px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.25s ease;
+  animation: cardIn 0.35s ease both;
+}
+.mail-card.unread { background: #c8dfe6; font-weight: 700; }
+.mail-card.read   { background: #f2f2f2; font-weight: 400; }
+.mail-card:hover {
+  transform: translateX(3px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+}
+.mail-card.selected {
+  box-shadow: inset 4px 0 0 #1a73e8, 0 2px 8px rgba(0, 0, 0, 0.14);
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 500;
+  font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.mail-info { flex: 1; min-width: 0; }
+.mail-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.mail-sender { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mail-date { font-size: 12px; color: #444; white-space: nowrap; font-weight: inherit; }
+.mail-subject { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.mail-preview {
+  font-size: 13px; font-weight: 400; color: #6b6b6b;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.no-result {
+  text-align: center; color: #888; padding: 30px 10px; font-size: 14px;
+}
+
+/* ---------- Sidebar réduite ---------- */
+.sidebar.collapsed {
+  width: 76px; min-width: 76px;
+  padding-left: 12px; padding-right: 12px;
+}
+.sidebar.collapsed .compose-label,
+.sidebar.collapsed .inbox-label,
+.sidebar.collapsed .mail-info { display: none; }
+.sidebar.collapsed .compose-btn { padding: 16px; justify-content: center; }
+.sidebar.collapsed .inbox-entry { flex-direction: column; gap: 4px; padding: 20px 0 10px; }
+.sidebar.collapsed .mail-card { padding: 8px; justify-content: center; }
+.sidebar.collapsed .mail-list { margin: 0 -12px; padding: 0 12px 14px; }
+
+/* ---------- Zone principale ---------- */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 12px;
+}
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 6px 0 0;
+}
+
+.search-box {
+  display: flex; align-items: center; gap: 18px;
+  background: #fafafa;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 676px;
+  padding: 0 20px;
+  height: 56px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s, background 0.2s;
+}
+.search-box:focus-within { background: #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15); }
+.search-box input {
+  flex: 1; border: none; outline: none; background: transparent;
+  font-size: 18px; font-family: inherit; color: #202124;
+}
+
+.topbar-actions { display: flex; align-items: center; gap: 36px; padding-right: 8px; }
+
+.icon-btn {
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s, transform 0.3s;
+}
+.gear { width: 52px; height: 52px; }
+.gear:hover { background: #e4e4e4; transform: rotate(40deg); }
+
+.avatar-btn { border-radius: 50%; display: flex; border: 3px solid #fff; transition: box-shadow 0.2s; }
+.avatar-btn:hover { box-shadow: 0 0 0 3px rgba(90, 168, 116, 0.35); }
+
+/* ---------- Menus déroulants ---------- */
+.dropdown-wrap { position: relative; }
+.dropdown {
+  position: absolute; right: 0; top: calc(100% + 8px);
+  min-width: 260px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2);
+  padding: 8px 0;
+  z-index: 50;
+  animation: dropIn 0.18s ease;
+}
+.dropdown a { display: block; padding: 12px 20px; font-size: 14px; transition: background 0.15s; }
+.dropdown a:hover { background: #f1f3f4; }
+.dropdown-user { padding: 12px 20px 14px; border-bottom: 1px solid #eee; margin-bottom: 4px; }
+.dropdown-user strong { display: block; font-size: 15px; }
+.dropdown-user span { font-size: 12px; color: #666; }
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Panneau de lecture ---------- */
+.reader {
+  flex: 1;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  overflow-y: auto;
+  position: relative;
+}
+.reader::-webkit-scrollbar { width: 10px; }
+.reader::-webkit-scrollbar-thumb { background: #ccc; border-radius: 5px; }
+
+.reader-empty {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #b5b5b5; font-size: 20px;
+  user-select: none;
+}
+
+.reader-content {
+  padding: 34px 46px 50px;
+  max-width: 980px;
+  animation: readerIn 0.3s ease;
+}
+@keyframes readerIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.reader-subject { font-size: 26px; font-weight: 400; margin-bottom: 24px; }
+
+.reader-meta { display: flex; align-items: center; gap: 16px; margin-bottom: 26px; }
+.reader-meta .avatar { width: 46px; height: 46px; font-size: 20px; }
+.reader-from { flex: 1; min-width: 0; }
+.reader-from strong { font-size: 15px; }
+.reader-from .addr { font-size: 13px; color: #5f6368; margin-left: 6px; }
+.reader-from .to { display: block; font-size: 12.5px; color: #5f6368; margin-top: 2px; }
+.reader-date { font-size: 13px; color: #5f6368; white-space: nowrap; }
+
+.reader-body { font-size: 15.5px; line-height: 1.65; white-space: pre-line; color: #222; }
+
+/* Bloc réservé au script / code secret */
+#script-fin-mail { margin-top: 14px; font-size: 15px; color: #222; }
+
+/* Pièces jointes */
+.attachments { margin-top: 34px; padding-top: 20px; border-top: 1px solid #e6e6e6; }
+.attachments-title { font-size: 13px; color: #5f6368; margin-bottom: 12px; }
+.attachments-list { display: flex; flex-wrap: wrap; gap: 14px; }
+.attachment {
+  display: flex; align-items: center; gap: 12px;
+  border: 1px solid #dadce0;
+  border-radius: 10px;
+  padding: 12px 18px 12px 14px;
+  min-width: 230px;
+  transition: box-shadow 0.2s, transform 0.2s, background 0.2s;
+}
+.attachment:hover { box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15); transform: translateY(-2px); background: #fafafa; }
+.attachment svg { flex-shrink: 0; }
+.attachment-name { font-size: 14px; font-weight: 500; }
+.attachment-type { font-size: 12px; color: #777; }
+
+/* ---------- Fenêtre de rédaction ---------- */
+.compose-window {
+  position: fixed; right: 40px; bottom: 0;
+  width: 520px;
+  background: #fff;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.3);
+  display: flex; flex-direction: column;
+  z-index: 100;
+  animation: composeIn 0.25s ease;
+}
+@keyframes composeIn {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.compose-header {
+  background: #404040; color: #fff;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px;
+  border-radius: 12px 12px 0 0;
+  font-size: 14px; font-weight: 500;
+}
+.compose-close { color: #fff; font-size: 24px; line-height: 1; padding: 0 4px; }
+.compose-close:hover { color: #ccc; }
+.compose-field {
+  border: none; border-bottom: 1px solid #eee; outline: none;
+  padding: 12px 16px; font-size: 14px; font-family: inherit;
+}
+.compose-body {
+  border: none; outline: none; resize: none;
+  padding: 14px 16px; height: 240px;
+  font-size: 14px; font-family: inherit;
+}
+.compose-error {
+  background: #fdecea; color: #b3261e;
+  font-size: 13px; padding: 10px 16px;
+  border-top: 1px solid #f5c6c2;
+  animation: readerIn 0.25s ease;
+}
+.compose-footer { padding: 12px 16px; }
+.send-btn {
+  background: #1a73e8; color: #fff;
+  padding: 10px 26px; border-radius: 18px;
+  font-size: 14px; font-weight: 500;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.send-btn:hover { background: #1765cc; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3); }
+
+/* ---------- Bouton de reset caché (tests) ---------- */
+.reset-hidden {
+  position: fixed; left: 4px; bottom: 2px;
+  font-size: 10px; color: transparent;
+  background: transparent; padding: 2px 6px;
+  opacity: 0; transition: opacity 0.2s;
+  z-index: 200;
+}
+.reset-hidden:hover { opacity: 1; color: #888; background: #eee; border-radius: 4px; }
