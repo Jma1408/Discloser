@@ -45,6 +45,16 @@ const INDICES_SECRET = [
     sujet: "Planning affiché",
     texte: "Qui a encore laissé le planning affiché dans la salle de réunion ? Il y a nos accès dessus, et les caméras filment tout. Merci de le retirer avant lundi.",
     actif: true
+  },
+  {
+    id: "video-donnees",
+    apres: "donnees",
+    action: "déverrouiller la vidéo de l'onglet Données",
+    delaiMin: 10,
+    expediteur: "Service Transmissions",
+    sujet: "Enregistrement en boucle",
+    texte: "Qui a laissé tourner l'enregistrement de la salle radio ? Ces quatre mots en boucle, toute la journée… Et rappelez-vous la règle maison : chez nous, chaque lettre a son rang.",
+    actif: true
   }
 ];
 
@@ -731,6 +741,7 @@ window.addEventListener('pageshow', function (event) {
   // ONGLET DONNÉES
   $('#contenu-donnees').innerHTML = `
     <div class="secure-header">
+      <span class="lab-ref">ARCHIVES · LABORATOIRE CENTRAL · ÉCH. PKX-B/07</span>
       <h2>Données Sécurisées</h2>
       <p class="secure-warning">Accès restreint - Authentification requise</p>
     </div>
@@ -750,65 +761,79 @@ window.addEventListener('pageshow', function (event) {
       <div class="secure-tab-nav">
         <button class="secure-tab-btn active" data-tab="documents">Documents</button>
         <button class="secure-tab-btn" data-tab="video">Vidéo</button>
-        <button class="secure-tab-btn" data-tab="audio">Audio</button>
+        <button class="secure-tab-btn" data-tab="audio">Son</button>
       </div>
 
       <div class="secure-tab-content active" id="tab-documents">
-        <h3>Documents Confidentiels</h3>
-        <div class="secure-doc-list">
-          <div class="secure-document">
-            <span class="doc-icon">📄</span>
-            <span class="doc-name">RAPPORT_FINAL_PHASE_4.pdf</span>
-            <span class="doc-size">2.3 MB</span>
-          </div>
-          <div class="secure-document">
-            <span class="doc-icon">📄</span>
-            <span class="doc-name">RESULTATS_TESTS_CLINIQUES.xlsx</span>
-            <span class="doc-size">1.8 MB</span>
-          </div>
-          <div class="secure-document">
-            <span class="doc-icon">📄</span>
-            <span class="doc-name">CHRONOLOGIE_DEPLOIEMENT.docx</span>
-            <span class="doc-size">956 KB</span>
-          </div>
+        <h3><span class="lab-ref">ÉCH. PKX-B/07</span> Documents de laboratoire</h3>
+        <div class="lab-docs">
+          <article class="lab-doc">
+            <header><span class="lab-ref">NOTE · LABO B</span><span class="lab-tag">brouillon</span></header>
+            <p>Stabilité de l'échantillon <del>confirmée</del> à revérifier.<br>
+               Conservation à <del>4 °C</del> 2 °C ? Attendre l'avis du responsable.<br>
+               Ne rien transmettre à la Direction avant validation.</p>
+            <p class="lab-sign">— signature illisible</p>
+          </article>
+          <article class="lab-doc">
+            <header><span class="lab-ref">JOURNAL · SÉRIE 3</span><span class="lab-tag">incomplet</span></header>
+            <p>J1 : inoculation du lot B. Réaction conforme.<br>
+               J2 : rien à signaler.<br>
+               J3 :<br>
+               J4 : tout reprendre depuis le début. Le protocole précédent ne s'applique plus.</p>
+          </article>
+          <article class="lab-doc">
+            <header><span class="lab-ref">MÉMO · DIRECTION</span><span class="lab-tag">interne</span></header>
+            <p>À l'attention des chefs d'équipe : le calendrier est maintenu.
+               Ceux qui savent n'ont pas besoin d'explications, les autres n'ont pas besoin de savoir.
+               Rien ne doit sortir avant la date prévue.</p>
+          </article>
+          <article class="lab-doc">
+            <header><span class="lab-ref">RELEVÉS · SANS TITRE</span><span class="lab-tag">non légendé</span></header>
+            <table class="lab-mesures">
+              <tr><td>0,42</td><td>0,38</td><td>0,51</td><td>—</td><td>0,47</td></tr>
+              <tr><td>12</td><td>14</td><td>9</td><td>11</td><td>13</td></tr>
+              <tr><td>3,1</td><td>2,8</td><td>3,4</td><td>3,0</td><td>—</td></tr>
+            </table>
+          </article>
+          <article class="lab-doc">
+            <header><span class="lab-ref">POST-IT · POSTE 3</span><span class="lab-tag">recopié</span></header>
+            <p class="lab-postit">« Ne pas oublier : ce n'est PAS dans le tiroir. Demander à M. avant vendredi. »</p>
+          </article>
+          <article class="lab-doc">
+            <header><span class="lab-ref">RAPPORT · ANNEXE C</span><span class="lab-tag">extrait</span></header>
+            <p>Les effets observés sur le groupe témoin ne sont pas jugés significatifs à ce stade.
+               Pour l'interprétation complète, se reporter à l'annexe D.</p>
+          </article>
         </div>
       </div>
 
       <div class="secure-tab-content" id="tab-video">
-        <h3>Vidéos Sécurisées</h3>
-        <div class="secure-video-list">
-          <div class="secure-video-item locked">
-            <div class="video-thumbnail"></div>
-            <div class="video-info">
-              <div class="video-title">Documentation Projet PICKAXE</div>
-              <div class="video-duration">14:32</div>
-              <div class="lock-badge">🔒 Accès restreint</div>
-            </div>
+        <h3><span class="lab-ref">ENR. PKX-V/01</span> Enregistrement vidéo</h3>
+        <div class="lab-coffre" id="lab-coffre">
+          <div class="lab-afficheur" id="lab-afficheur" aria-live="polite"></div>
+          <div class="lab-coffre__etat" id="lab-coffre-etat">CODE REQUIS</div>
+          <div class="lab-clavier" id="lab-clavier">
+            <button type="button" data-touche="1">1</button><button type="button" data-touche="2">2</button><button type="button" data-touche="3">3</button>
+            <button type="button" data-touche="4">4</button><button type="button" data-touche="5">5</button><button type="button" data-touche="6">6</button>
+            <button type="button" data-touche="7">7</button><button type="button" data-touche="8">8</button><button type="button" data-touche="9">9</button>
+            <button type="button" data-touche="effacer" class="lab-touche--action">⌫</button><button type="button" data-touche="0">0</button><button type="button" data-touche="valider" class="lab-touche--valider">✓</button>
           </div>
-          <div class="secure-video-item locked">
-            <div class="video-thumbnail"></div>
-            <div class="video-info">
-              <div class="video-title">Présentation Résultats Phase 4</div>
-              <div class="video-duration">28:15</div>
-              <div class="lock-badge">🔒 Accès restreint</div>
-            </div>
-          </div>
+        </div>
+        <div class="lab-video" id="lab-video" hidden>
+          <video id="lab-video-lecteur" controls preload="metadata" playsinline></video>
         </div>
       </div>
 
       <div class="secure-tab-content" id="tab-audio">
-        <h3>Enregistrements Audio</h3>
-        <div class="secure-audio-list">
-          <div class="secure-audio-item">
-            <span class="audio-icon">🔊</span>
-            <span class="audio-name">Réunion_Directeurs_09-28.mp3</span>
-            <span class="audio-duration">47:23</span>
+        <h3><span class="lab-ref">ENR. PKX-A/04</span> Enregistrement sonore</h3>
+        <div class="lab-son">
+          <canvas class="lab-oscillo" id="lab-oscillo" width="640" height="160"></canvas>
+          <div class="lab-son__commandes">
+            <button type="button" class="xp-button" id="lab-son-lecture">▶ Lecture</button>
+            <label class="lab-son__volume">Volume <input type="range" id="lab-son-volume" min="0" max="1" step="0.05" value="0.8"></label>
+            <span class="lab-tag" id="lab-son-etat">à l'arrêt</span>
           </div>
-          <div class="secure-audio-item">
-            <span class="audio-icon">🔊</span>
-            <span class="audio-name">Alerte_Sécurité_Système.wav</span>
-            <span class="audio-duration">2:41</span>
-          </div>
+          <audio id="lab-son-audio" src="donnees/enigme_sonore.mp3" loop preload="metadata"></audio>
         </div>
       </div>
     </div>
@@ -859,6 +884,9 @@ window.addEventListener('pageshow', function (event) {
       });
     }
 
+    initialiserSonLabo();
+    initialiserCoffreVideo();
+
     $$('.secure-tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         $$('.secure-tab-btn').forEach(b => b.classList.remove('active'));
@@ -869,6 +897,184 @@ window.addEventListener('pageshow', function (event) {
       });
     });
   }, 10);
+
+  /* ---------- Données > Son : lecteur en boucle + oscilloscope ---------- */
+  function initialiserSonLabo() {
+    const audio = $('#lab-son-audio');
+    const bouton = $('#lab-son-lecture');
+    const volume = $('#lab-son-volume');
+    const etat = $('#lab-son-etat');
+    const canvas = $('#lab-oscillo');
+    if (!audio || !bouton || !canvas) return;
+    const ctx2d = canvas.getContext('2d');
+    let contexte = null;
+    let analyseur = null;
+    let donnees = null;
+    let anim = null;
+
+    audio.volume = parseFloat(volume.value);
+    volume.addEventListener('input', () => { audio.volume = parseFloat(volume.value); });
+
+    // Trace l'onde (ligne plate à l'arrêt) sur une grille de mesure
+    function dessiner() {
+      const l = canvas.width, h = canvas.height;
+      ctx2d.fillStyle = '#0b1a14';
+      ctx2d.fillRect(0, 0, l, h);
+      ctx2d.strokeStyle = 'rgba(80, 200, 140, .15)';
+      ctx2d.lineWidth = 1;
+      for (let x = 0; x <= l; x += 40) { ctx2d.beginPath(); ctx2d.moveTo(x + .5, 0); ctx2d.lineTo(x + .5, h); ctx2d.stroke(); }
+      for (let y = 0; y <= h; y += 40) { ctx2d.beginPath(); ctx2d.moveTo(0, y + .5); ctx2d.lineTo(l, y + .5); ctx2d.stroke(); }
+      ctx2d.strokeStyle = '#4dffa6';
+      ctx2d.lineWidth = 2;
+      ctx2d.shadowColor = '#4dffa6';
+      ctx2d.shadowBlur = 6;
+      ctx2d.beginPath();
+      if (analyseur && !audio.paused) {
+        analyseur.getByteTimeDomainData(donnees);
+        for (let i = 0; i < donnees.length; i++) {
+          const x = i / (donnees.length - 1) * l;
+          const y = donnees[i] / 255 * h;
+          if (i === 0) ctx2d.moveTo(x, y); else ctx2d.lineTo(x, y);
+        }
+      } else {
+        ctx2d.moveTo(0, h / 2);
+        ctx2d.lineTo(l, h / 2);
+      }
+      ctx2d.stroke();
+      ctx2d.shadowBlur = 0;
+      if (!audio.paused) anim = requestAnimationFrame(dessiner);
+    }
+
+    bouton.addEventListener('click', () => {
+      // Web Audio créé au premier clic (geste utilisateur requis par les navigateurs)
+      if (!contexte) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) {
+          contexte = new AC();
+          const source = contexte.createMediaElementSource(audio);
+          analyseur = contexte.createAnalyser();
+          analyseur.fftSize = 2048;
+          donnees = new Uint8Array(analyseur.fftSize);
+          source.connect(analyseur);
+          analyseur.connect(contexte.destination);
+        }
+      }
+      if (contexte && contexte.state === 'suspended') contexte.resume();
+      if (audio.paused) audio.play().catch(() => {});
+      else audio.pause();
+    });
+    audio.addEventListener('play', () => {
+      bouton.textContent = '❚❚ Pause';
+      etat.textContent = 'lecture en boucle';
+      cancelAnimationFrame(anim);
+      dessiner();
+    });
+    audio.addEventListener('pause', () => {
+      bouton.textContent = '▶ Lecture';
+      etat.textContent = 'à l\'arrêt';
+      cancelAnimationFrame(anim);
+      dessiner();
+    });
+    dessiner();
+  }
+
+  /* ---------- Données > Vidéo : clavier à code (afficheur 7 segments) ---------- */
+  const CLE_VIDEO_DONNEES = 'discloser_donnees_video';
+  const EMPREINTE_CODE_VIDEO = 1109160278; // empreinte du code, jamais le code en clair
+  function empreinte(texte) {
+    let x = 5381;
+    for (let i = 0; i < texte.length; i++) x = ((x * 33) ^ texte.charCodeAt(i)) >>> 0;
+    return x;
+  }
+  const SEGMENTS = { 0: 'abcdef', 1: 'bc', 2: 'abdeg', 3: 'abcdg', 4: 'bcfg', 5: 'acdfg', 6: 'acdefg', 7: 'abc', 8: 'abcdefg', 9: 'abcdfg' };
+
+  function initialiserCoffreVideo() {
+    const afficheur = $('#lab-afficheur');
+    const etat = $('#lab-coffre-etat');
+    const coffre = $('#lab-coffre');
+    const zoneVideo = $('#lab-video');
+    const lecteur = $('#lab-video-lecteur');
+    if (!afficheur || !coffre) return;
+
+    // 5 chiffres de 7 segments chacun
+    for (let i = 0; i < 5; i++) {
+      const chiffre = document.createElement('span');
+      chiffre.className = 'lab-chiffre';
+      chiffre.innerHTML = 'abcdefg'.split('').map((s) => `<i class="seg seg-${s}"></i>`).join('');
+      afficheur.appendChild(chiffre);
+    }
+    const chiffres = afficheur.querySelectorAll('.lab-chiffre');
+    let saisie = '';
+    let bloque = false;
+
+    function majAfficheur() {
+      chiffres.forEach((c, i) => {
+        const allumes = i < saisie.length ? SEGMENTS[saisie[i]] : 'g';
+        c.querySelectorAll('.seg').forEach((seg) => {
+          seg.classList.toggle('on', allumes.includes(seg.classList[1].slice(4)));
+        });
+        c.classList.toggle('vide', i >= saisie.length);
+      });
+    }
+
+    function ouvrirVideo(animation) {
+      coffre.classList.add('ok');
+      etat.textContent = 'ACCÈS AUTORISÉ';
+      if (!lecteur.getAttribute('src')) lecteur.src = 'donnees/donnees_video.mp4';
+      const montrer = () => { coffre.hidden = true; zoneVideo.hidden = false; };
+      if (animation) setTimeout(montrer, 1200); else montrer();
+    }
+
+    function valider() {
+      if (bloque || saisie.length < 5) return;
+      if (empreinte('pkx-mp:' + saisie) === EMPREINTE_CODE_VIDEO) {
+        bloque = true;
+        try { localStorage.setItem(CLE_VIDEO_DONNEES, '1'); } catch (e) { /* ignoré */ }
+        indicesSecret.fait('video-donnees');
+        ouvrirVideo(true);
+      } else {
+        bloque = true;
+        coffre.classList.add('refus');
+        etat.textContent = 'ACCÈS REFUSÉ';
+        setTimeout(() => {
+          coffre.classList.remove('refus');
+          etat.textContent = 'CODE REQUIS';
+          saisie = '';
+          majAfficheur();
+          bloque = false;
+        }, 1600);
+      }
+    }
+
+    function touche(t) {
+      if (bloque) return;
+      if (t === 'effacer') saisie = saisie.slice(0, -1);
+      else if (t === 'valider') { valider(); return; }
+      else if (saisie.length < 5) saisie += t;
+      majAfficheur();
+    }
+
+    $('#lab-clavier').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-touche]');
+      if (b) touche(b.dataset.touche);
+    });
+
+    // Clavier physique quand le sous-onglet Vidéo est affiché
+    document.addEventListener('keydown', (e) => {
+      const onglet = $('#tab-video');
+      if (!onglet || !onglet.classList.contains('active') || coffre.hidden || !onglet.offsetParent) return;
+      if (e.target.closest && e.target.closest('input, textarea')) return;
+      if (/^[0-9]$/.test(e.key)) touche(e.key);
+      else if (e.key === 'Backspace') { e.preventDefault(); touche('effacer'); }
+      else if (e.key === 'Enter') { e.preventDefault(); touche('valider'); }
+    });
+
+    majAfficheur();
+    // Déverrouillage déjà acquis (rechargement)
+    let acquis = false;
+    try { acquis = localStorage.getItem(CLE_VIDEO_DONNEES) === '1'; } catch (e) { acquis = false; }
+    if (acquis) ouvrirVideo(false);
+  }
 
   // ONGLET MESSAGERIE
   let emailDetailActif = null;
