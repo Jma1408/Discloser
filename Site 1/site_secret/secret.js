@@ -507,9 +507,35 @@ window.addEventListener('pageshow', function (event) {
     </div>
 
     <!-- CAM-006 -->
-    <div class="camera-entry accessible">
+    <div class="camera-entry restricted">
       <div class="camera-header">
         <span class="camera-id">CAM-006</span>
+        <span class="camera-status restricted-badge">✗ VERROUILLÉ</span>
+      </div>
+      <div class="camera-details">
+        <div class="detail-row">
+          <span class="label">Localisation :</span>
+          <span class="value">Salle de réunion (Étage 3) - Secteur privé</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Type :</span>
+          <span class="value">Caméra fixe (capture image)</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Couverture :</span>
+          <span class="value">Écran de présentation</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Dernier enregistrement :</span>
+          <span class="value">2026-10-15 11:04:12</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAM-008 -->
+    <div class="camera-entry accessible">
+      <div class="camera-header">
+        <span class="camera-id">CAM-008</span>
         <span class="camera-status">✓ ACCESSIBLE</span>
       </div>
       <div class="camera-details">
@@ -528,32 +554,6 @@ window.addEventListener('pageshow', function (event) {
         <div class="detail-row">
           <span class="label">Dernier enregistrement :</span>
           <span class="value">2026-09-28 10:05:33</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- CAM-008 -->
-    <div class="camera-entry accessible">
-      <div class="camera-header">
-        <span class="camera-id">CAM-008</span>
-        <span class="camera-status">✓ ACCESSIBLE</span>
-      </div>
-      <div class="camera-details">
-        <div class="detail-row">
-          <span class="label">Localisation :</span>
-          <span class="value">Salle de réunion (Étage 3) - Secteur privé</span>
-        </div>
-        <div class="detail-row">
-          <span class="label">Type :</span>
-          <span class="value">Caméra fixe (capture image)</span>
-        </div>
-        <div class="detail-row">
-          <span class="label">Couverture :</span>
-          <span class="value">Écran de présentation</span>
-        </div>
-        <div class="detail-row">
-          <span class="label">Dernier enregistrement :</span>
-          <span class="value">2026-10-15 11:04:12</span>
         </div>
       </div>
     </div>
@@ -688,7 +688,9 @@ window.addEventListener('pageshow', function (event) {
           <div class="image-placeholder">
             <div class="placeholder-text" id="gallery-placeholder">Photo 001 — en attente</div>
           </div>
-          <img id="gallery-photo" alt="" hidden style="width:100%;height:100%;object-fit:cover">
+          <img id="gallery-photo" alt="" hidden style="width:100%;height:100%;object-fit:contain">
+          <button type="button" class="gallery-fleche gallery-fleche--prev" id="gallery-fleche-prev" aria-label="Photo précédente">‹</button>
+          <button type="button" class="gallery-fleche gallery-fleche--next" id="gallery-fleche-next" aria-label="Photo suivante">›</button>
         </div>
         
         <div class="gallery-image-info" id="gallery-image-info">Photo 001</div>
@@ -750,6 +752,35 @@ window.addEventListener('pageshow', function (event) {
       });
     });
 
+    // Flèches superposées sur l'image : mêmes actions que Précédent / Suivant
+    $('#gallery-fleche-prev').addEventListener('click', () => prevBtn.click());
+    $('#gallery-fleche-next').addEventListener('click', () => nextBtn.click());
+
+    // Flèches ← → du clavier (onglet Laboratoire affiché, terminal fermé, hors champ de saisie)
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      if (!$('#tab-laboratoire') || !$('#tab-laboratoire').classList.contains('active')) return;
+      const terminal = $('#terminal-overlay');
+      if (terminal && terminal.classList.contains('visible')) return;
+      if (e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      e.preventDefault();
+      (e.key === 'ArrowLeft' ? prevBtn : nextBtn).click();
+    });
+
+    // L'image tient entièrement dans la zone visible (hauteur calculée, sans défilement)
+    const cadre = $('.gallery-image-frame');
+    const ajusterCadre = () => {
+      const zone = cadre.closest('.content');
+      if (!zone || !cadre.offsetParent) return;
+      const haut = cadre.getBoundingClientRect().top - zone.getBoundingClientRect().top + zone.scrollTop;
+      const dispo = zone.clientHeight - haut - 34; // place pour la légende « Photo XXX »
+      const h = Math.max(140, Math.min(cadre.clientWidth * 3 / 4, dispo));
+      cadre.style.height = Math.round(h) + 'px';
+    };
+    window.addEventListener('resize', ajusterCadre);
+    new MutationObserver(ajusterCadre).observe($('#tab-laboratoire'), { attributes: true, attributeFilter: ['class'] });
+    ajusterCadre();
+
     // Affichage initial (photo 1 si elle est disponible)
     updateGallery();
   }, 10);
@@ -781,21 +812,21 @@ window.addEventListener('pageshow', function (event) {
       </div>
 
       <div class="secure-tab-content active" id="tab-documents">
-        <h3><span class="lab-ref">ÉCH. PKX-B/07</span> Documents de laboratoire</h3>
+        <h3><span class="lab-ref">ÉCH. PKX-B</span> Documents de laboratoire</h3>
         <div class="lab-docs">
           <article class="lab-doc">
             <header><span class="lab-ref">NOTE · LABO B</span><span class="lab-tag">brouillon</span></header>
             <p>Stabilité de l'échantillon <del>confirmée</del> à revérifier.<br>
-               Conservation à <del>4 °C</del> 2 °C ? Attendre l'avis du responsable.<br>
+               Conservation au <del>froid</del> grand froid ? Attendre l'avis du responsable.<br>
                Ne rien transmettre à la Direction avant validation.</p>
             <p class="lab-sign">— signature illisible</p>
           </article>
           <article class="lab-doc">
-            <header><span class="lab-ref">JOURNAL · SÉRIE 3</span><span class="lab-tag">incomplet</span></header>
-            <p>J1 : inoculation du lot B. Réaction conforme.<br>
-               J2 : rien à signaler.<br>
-               J3 :<br>
-               J4 : tout reprendre depuis le début. Le protocole précédent ne s'applique plus.</p>
+            <header><span class="lab-ref">JOURNAL · DERNIÈRE SÉRIE</span><span class="lab-tag">incomplet</span></header>
+            <p>Premier jour : inoculation du lot B. Réaction conforme.<br>
+               Deuxième jour : rien à signaler.<br>
+               Troisième jour :<br>
+               Quatrième jour : tout reprendre depuis le début. Le protocole précédent ne s'applique plus.</p>
           </article>
           <article class="lab-doc">
             <header><span class="lab-ref">MÉMO · DIRECTION</span><span class="lab-tag">interne</span></header>
@@ -804,15 +835,7 @@ window.addEventListener('pageshow', function (event) {
                Rien ne doit sortir avant la date prévue.</p>
           </article>
           <article class="lab-doc">
-            <header><span class="lab-ref">RELEVÉS · SANS TITRE</span><span class="lab-tag">non légendé</span></header>
-            <table class="lab-mesures">
-              <tr><td>0,42</td><td>0,38</td><td>0,51</td><td>—</td><td>0,47</td></tr>
-              <tr><td>12</td><td>14</td><td>9</td><td>11</td><td>13</td></tr>
-              <tr><td>3,1</td><td>2,8</td><td>3,4</td><td>3,0</td><td>—</td></tr>
-            </table>
-          </article>
-          <article class="lab-doc">
-            <header><span class="lab-ref">POST-IT · POSTE 3</span><span class="lab-tag">recopié</span></header>
+            <header><span class="lab-ref">POST-IT · POSTE DU FOND</span><span class="lab-tag">recopié</span></header>
             <p class="lab-postit">« Ne pas oublier : ce n'est PAS dans le tiroir. Demander à M. avant vendredi. »</p>
           </article>
           <article class="lab-doc">
@@ -882,7 +905,7 @@ window.addEventListener('pageshow', function (event) {
             authMsg.textContent = 'Veuillez entrer un mot de passe.';
             authMsg.className = 'auth-message error';
           }
-        } else if (pwd === 'ADMIN1234') {
+        } else if (pwd.trim().toUpperCase() === 'ADMIN1234') { // majuscules/minuscules indifférentes
           if (authMsg) {
             authMsg.textContent = '✓ Authentification réussie';
             authMsg.className = 'auth-message success';
@@ -1748,10 +1771,29 @@ Plus d'informations lors de la prochaine réunion de coordination.`
     '003': { video: 'videos/camera003.mp4', disponible: true },
     '004': { video: 'videos/camera004.mp4', disponible: true },
     '005': { video: 'videos/camera005.mp4', disponible: true },
-    '006': { video: 'videos/camera006.mp4', disponible: true },
+    '006': { image: 'videos/camera006.jpg', disponible: true, verrou: true }, // verrouillée : voir CLE_CAMERAS_VUES
     '007': { video: 'videos/camera007.mp4', disponible: true },
-    '008': { image: 'videos/camera008.jpg', disponible: true }
+    '008': { video: 'videos/camera008.mp4', disponible: true }
   };
+
+  /* Caméra verrouillée (« verrou: true ») : jamais ouvrable par clic sur le mur ;
+     accessible seulement par /cameraXXX une fois toutes les autres caméras
+     visionnées jusqu'au bout (fin de lecture ou ≥ 90 % de la durée). */
+  const CLE_CAMERAS_VUES = 'discloser_cameras_vues';
+  const camerasAVoir = () => Object.keys(CAMERAS).filter((id) => !CAMERAS[id].verrou);
+  function camerasVues() {
+    let vues = [];
+    try { vues = JSON.parse(localStorage.getItem(CLE_CAMERAS_VUES)) || []; } catch (e) { vues = []; }
+    return Array.isArray(vues) ? vues : [];
+  }
+  function marquerCameraVue(id) {
+    const vues = camerasVues();
+    if (vues.includes(id)) return;
+    vues.push(id);
+    try { localStorage.setItem(CLE_CAMERAS_VUES, JSON.stringify(vues)); } catch (e) { /* stockage indisponible */ }
+  }
+  const nbCamerasVues = () => camerasAVoir().filter((id) => camerasVues().includes(id)).length;
+  const camerasDebloquees = () => nbCamerasVues() === camerasAVoir().length;
 
   // Animations passées d'office si l'utilisateur préfère un mouvement réduit
   const MOUVEMENT_REDUIT = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -2010,6 +2052,11 @@ Plus d'informations lors de la prochaine réunion de coordination.`
         this.log('');
         return;
       }
+      if (camera.verrou && !camerasDebloquees()) {
+        this.refuser(`ACCÈS REFUSÉ — analyse des autres flux incomplète (${nbCamerasVues()}/${camerasAVoir().length}).`);
+        this.log('');
+        return;
+      }
 
       await this.type(`Établissement du flux CAM-${id}…`);
       await this.barre('Liaison', 100, 700);
@@ -2075,8 +2122,8 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       grille.className = 'terminal-mur__grille';
       Object.keys(CAMERAS).forEach((id) => {
         const cam = CAMERAS[id];
-        const etat = cam.disponible ? 'en-ligne' : 'hors-ligne';
-        const statut = cam.disponible ? 'EN LIGNE' : 'HORS LIGNE';
+        const etat = cam.disponible && !cam.verrou ? 'en-ligne' : 'hors-ligne';
+        const statut = cam.verrou ? 'VERROUILLÉ' : (cam.disponible ? 'EN LIGNE' : 'HORS LIGNE');
         const caseCam = document.createElement('button');
         caseCam.type = 'button';
         caseCam.className = `terminal-mur__case terminal-mur__case--${etat}`;
@@ -2090,6 +2137,18 @@ Plus d'informations lors de la prochaine réunion de coordination.`
           caseCam.classList.add('terminal-mur__case--bruit');
         };
 
+        if (cam.verrou) {
+          bruit('ACCÈS VERROUILLÉ');
+          // Jamais ouvrable par clic : message, accès uniquement via le terminal
+          caseCam.addEventListener('click', () => {
+            const st = caseCam.querySelector('.terminal-mur__statut');
+            st.textContent = 'Accès manuel requis.';
+            clearTimeout(caseCam._minuterie);
+            caseCam._minuterie = setTimeout(() => { st.textContent = statut; }, 2000);
+          });
+          grille.appendChild(caseCam);
+          return;
+        }
         if (cam.disponible && cam.image) {
           // Caméra fixe : l'image en aperçu
           const img = document.createElement('img');
@@ -2168,6 +2227,12 @@ Plus d'informations lors de la prochaine réunion de coordination.`
           compteur.textContent = `${hms(video.currentTime)} / ${hms(video.duration)}`;
         };
         video.addEventListener('timeupdate', majCompteur);
+        // Visionnée jusqu'au bout (≥ 90 % ou fin) : compte pour débloquer la caméra verrouillée
+        const vue = () => marquerCameraVue(id);
+        video.addEventListener('ended', vue);
+        video.addEventListener('timeupdate', () => {
+          if (video.duration && video.currentTime >= video.duration * 0.9) vue();
+        });
         video.addEventListener('loadedmetadata', majCompteur);
         majCompteur();
 

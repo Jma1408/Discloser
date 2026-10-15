@@ -23,7 +23,7 @@ const INDICES = [
 /* ---------- CONSTANTES FACILES À MODIFIER ---------- */
 
 // Texte affiché dans le bloc de fin du mail principal (#script-fin-mail)
-const TEXTE_FIN_MAIL = "[SCRIPT / CODE À INSÉRER ICI]";
+const TEXTE_FIN_MAIL = ""; // vide : aucun bloc affiché
 
 // Pièces jointes du mail principal
 // Document : s'affiche dans la messagerie (fenêtre superposée #doc-seb).
@@ -463,7 +463,7 @@ function ouvrirMail(id) {
 
   // Bloc réservé au script / code secret (mail principal uniquement)
   if (m.principal) {
-    html += `<div id="script-fin-mail">${TEXTE_FIN_MAIL}</div>`;
+    if (TEXTE_FIN_MAIL) html += `<div id="script-fin-mail">${TEXTE_FIN_MAIL}</div>`;
   }
 
   // Pièces jointes

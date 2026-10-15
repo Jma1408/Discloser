@@ -795,9 +795,13 @@ html.pkx-sortie body { opacity: 0; transition: opacity .25s ease; }
 .fiche-lot__champs { display: grid; grid-template-columns: 200px 1fr; gap: 8px 18px; margin: 0; }
 .fiche-lot__champs dt { color: #666; }
 .fiche-lot__champs dd { margin: 0; font-family: "Courier New", Courier, monospace; color: #222; }
-.fiche-lot__sequence { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--gris-clair); }
-.fiche-lot__libelle { display: block; color: #666; margin-bottom: 6px; }
-#message-code { font-family: "Courier New", Courier, monospace; font-size: 1.2em; letter-spacing: .04em; color: #222; word-break: break-word; }
+.fiche-lot__sequence { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--gris-clair); text-align: center; }
+.fiche-lot__libelle { display: block; color: #666; margin-bottom: 10px; text-transform: uppercase; letter-spacing: .12em; font-size: .78em; }
+#message-code {
+  display: block; font-family: "Courier New", Courier, monospace; font-size: 1.5em; font-weight: bold;
+  letter-spacing: .08em; line-height: 1.5; color: #111; word-spacing: .2em; overflow-wrap: anywhere;
+  padding: 14px 16px; border: 1px solid #c9c9c9; background: #f6f6f4;
+}
 @media (max-width: 600px) {
   .fiche-lot { padding: 18px; }
   .fiche-lot__champs { grid-template-columns: 1fr; gap: 2px; }
