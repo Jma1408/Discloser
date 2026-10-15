@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Innovations Pharmaceutiques - PICKAXE</title>
+  <title>Recherches pharmaceutiques - PICKAXE</title>
   <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -11,13 +11,13 @@
 
   <div id="site-header"></div>
 
-  <main class="page">
+  <main class="page page--pharma">
     <nav class="fil" aria-label="Fil d'Ariane">
       <a href="index.html">Accueil</a><span class="sep-fil">›</span>
       <a href="innovations.html">Innovations</a><span class="sep-fil">›</span>Pharmaceutique
     </nav>
 
-    <h1 class="page-titre">Innovations Pharmaceutiques</h1>
+    <h1 class="page-titre">Recherches pharmaceutiques</h1>
     <div class="page-barre"></div>
     <p class="page-intro">
       Fidèle à son esprit d'innovation, le groupe Pickaxe diversifie ses activités vers la santé
@@ -25,22 +25,139 @@
       acteurs privés, afin de contribuer à une vie plus sereine pour chacun.
     </p>
 
+    <div class="chiffres pharma-chiffres">
+      <div class="chiffre"><strong data-compteur="340">340</strong><span>chercheurs</span></div>
+      <div class="chiffre"><strong data-compteur="5">5</strong><span>sites de recherche</span></div>
+      <div class="chiffre"><strong data-compteur="12">12</strong><span>programmes actifs</span></div>
+      <div class="chiffre"><strong data-compteur="4">4</strong><span>brevets déposés en 2026</span></div>
+    </div>
+
     <section class="bloc">
       <h2>Une <em>ambition</em> pour demain</h2>
       <div class="bloc__barre"></div>
-      <p>
-        Nos programmes de recherche s'inscrivent dans une démarche d'excellence et de
-        confidentialité. Pour des raisons de propriété intellectuelle, les détails de nos projets
-        ne sont pas communiqués publiquement.
-      </p>
+      <div class="duo">
+        <div>
+          <p>
+            Nos programmes de recherche s'inscrivent dans une démarche d'excellence et de
+            confidentialité. Pour des raisons de propriété intellectuelle, les détails de nos projets
+            ne sont pas communiqués publiquement.
+          </p>
+          <p>
+            De la découverte d'une molécule à sa mise à disposition, chaque étape est conduite par des
+            équipes pluridisciplinaires : biologistes, chimistes, pharmacologues et data scientists.
+          </p>
+        </div>
+        <!-- Molécule stylisée (SVG animé, purement décoratif) -->
+        <svg class="molecule" viewBox="0 0 320 240" role="img" aria-label="Représentation d'une molécule">
+          <g class="molecule__liaisons">
+            <line x1="160" y1="60" x2="212" y2="90"/><line x1="212" y1="90" x2="212" y2="150"/>
+            <line x1="212" y1="150" x2="160" y2="180"/><line x1="160" y1="180" x2="108" y2="150"/>
+            <line x1="108" y1="150" x2="108" y2="90"/><line x1="108" y1="90" x2="160" y2="60"/>
+            <line x1="160" y1="60" x2="160" y2="18"/><line x1="212" y1="150" x2="262" y2="178"/>
+            <line x1="108" y1="90" x2="58" y2="62"/><line x1="262" y1="178" x2="296" y2="150"/>
+          </g>
+          <g class="molecule__atomes">
+            <circle cx="160" cy="60" r="11"/><circle cx="212" cy="90" r="11"/><circle cx="212" cy="150" r="11"/>
+            <circle cx="160" cy="180" r="11"/><circle cx="108" cy="150" r="11"/><circle cx="108" cy="90" r="11"/>
+            <circle class="atome--alt" cx="160" cy="18" r="8"/><circle class="atome--alt" cx="262" cy="178" r="9"/>
+            <circle class="atome--alt" cx="58" cy="62" r="8"/><circle cx="296" cy="150" r="7"/>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <section class="bloc">
+      <h2>Pipeline de <em>recherche</em></h2>
+      <div class="bloc__barre"></div>
+      <div class="tableau-defile">
+        <table class="tableau pipeline">
+          <thead>
+            <tr><th>Composé</th><th>Aire thérapeutique</th><th>Avancement</th><th>Phase</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>PKX-112</strong></td><td>Immunologie</td><td><span class="pipeline__barre" style="--p: 88%"></span></td><td>Phase III</td></tr>
+            <tr><td><strong>PKX-207</strong></td><td>Maladies respiratoires</td><td><span class="pipeline__barre" style="--p: 64%"></span></td><td>Phase II</td></tr>
+            <tr><td><strong>PKX-318</strong></td><td>Régulation métabolique</td><td><span class="pipeline__barre" style="--p: 58%"></span></td><td>Phase II</td></tr>
+            <tr><td><strong>PKX-401</strong></td><td>Santé des populations</td><td><span class="pipeline__barre" style="--p: 38%"></span></td><td>Phase I</td></tr>
+            <tr><td><strong>PKX-509</strong></td><td>Vaccinologie</td><td><span class="pipeline__barre" style="--p: 16%"></span></td><td>Préclinique</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="bloc">
+      <h2>Les étapes d'un <em>essai</em></h2>
+      <div class="bloc__barre"></div>
+      <div class="frise">
+        <div class="frise__item"><strong>Découverte</strong><p>Identification et sélection des molécules candidates.</p></div>
+        <div class="frise__item"><strong>Préclinique</strong><p>Évaluation de l'efficacité et de la tolérance en laboratoire.</p></div>
+        <div class="frise__item"><strong>Phase I</strong><p>Premières administrations à un nombre restreint de volontaires.</p></div>
+        <div class="frise__item"><strong>Phase II</strong><p>Détermination de la dose optimale sur des groupes élargis.</p></div>
+        <div class="frise__item"><strong>Phase III</strong><p>Confirmation des résultats à grande échelle.</p></div>
+        <div class="frise__item"><strong>Autorisation</strong><p>Examen du dossier par les autorités compétentes.</p></div>
+        <div class="frise__item"><strong>Déploiement</strong><p>Mise à disposition progressive auprès des populations ciblées.</p></div>
+      </div>
+    </section>
+
+    <section class="bloc">
+      <h2>Qualité &amp; <em>éthique</em></h2>
+      <div class="bloc__barre"></div>
+      <div class="cartes">
+        <div class="carte">
+          <span class="pastille">BPF / GMP</span>
+          <h3>Bonnes pratiques de fabrication</h3>
+          <p>Nos sites de production sont certifiés selon les référentiels BPF / GMP et audités chaque année.</p>
+        </div>
+        <div class="carte">
+          <span class="pastille">Éthique</span>
+          <h3>Comités indépendants</h3>
+          <p>Chaque protocole est soumis à l'avis de comités d'éthique indépendants avant toute étude clinique.</p>
+        </div>
+        <div class="carte">
+          <span class="pastille">Traçabilité</span>
+          <h3>Traçabilité intégrale</h3>
+          <p>Chaque lot est référencé, indexé et suivi de sa fabrication jusqu'à sa distribution.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="bloc">
+      <h2>Nos sites de <em>recherche</em></h2>
+      <div class="bloc__barre"></div>
+      <ul class="sites-recherche">
+        <li><strong>Bâle</strong><span>Chimie médicinale</span></li>
+        <li><strong>Lyon</strong><span>Immunologie</span></li>
+        <li><strong>Singapour</strong><span>Biotechnologies</span></li>
+        <li><strong>Boston</strong><span>Recherche clinique</span></li>
+        <li><strong>Johannesburg</strong><span>Santé des populations</span></li>
+      </ul>
+    </section>
+
+    <section class="bloc">
+      <h2>Engagement <em>santé publique</em></h2>
+      <div class="bloc__barre"></div>
+      <div class="encadre encadre--engagement">
+        Notre mission dépasse le soin individuel. Nous concevons des solutions à l'échelle des
+        populations, pour accompagner l'équilibre entre les besoins de l'humanité et les ressources
+        de la planète. Chaque programme est conduit dans l'intérêt du plus grand nombre.
+      </div>
     </section>
 
     <!-- ===== MESSAGE CODÉ ===== -->
     <section class="bloc">
+      <h2>Fiche de <em>lot</em></h2>
+      <div class="bloc__barre"></div>
       <!-- MESSAGE CODÉ À REMPLACER ICI (le texte chiffré dans le langage choisi) -->
       <p>Certaines informations ne s'adressent pas à l'œil humain : seules nos machines savent les lire.</p>
       <!-- indexation : 0101 0100 0100 1111 0101 0100 0100 0001 0100 1100 -->
-      <div class="code-box" id="message-code">Lot de validation — séquence d'indexation<br><span style="color:#f5f5f5;background-color:#f5f5f5">0101 0100 0100 1111 0101 0100 0100 0001 0100 1100</span></div>
+      <table class="fiche-lot">
+        <tr><th>Référence de lot</th><td>PKX-LV-0912</td></tr>
+        <tr><th>Programme</th><td>PKX-401</td></tr>
+        <tr><th>Date de fabrication</th><td>12/09/2026</td></tr>
+        <tr><th>Contrôle qualité</th><td>conforme</td></tr>
+        <tr><th>Statut</th><td>libéré</td></tr>
+        <tr><th>Séquence d'indexation</th><td id="message-code">0101 0100 0100 1111 0101 0100 0100 0001 0100 1100</td></tr>
+      </table>
     </section>
   </main>
 

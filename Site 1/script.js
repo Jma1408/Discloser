@@ -427,18 +427,19 @@ function initialiserAssistance() {
 }
 /* =====================================================================
    7. EFFETS VISUELS (classe "fx" sur <body>)
-   Désactivés sur connexion, pharmaceutique et secret (pages de l'ARG).
+   Désactivés sur connexion et secret (pages de l'ARG).
    - Header réduit au défilement (classe header--reduit)
    - Apparition au défilement (classes reveal / reveal--visible),
      une seule fois ; tout reste visible sans IntersectionObserver
      ou si l'utilisateur préfère un mouvement réduit.
    ===================================================================== */
 function initialiserEffets() {
-  const pageArg = document.getElementById('form-connexion')
-    || document.getElementById('message-code')
-    || /(^|\/)secret\.html$/.test(location.pathname);
-  if (pageArg) return;
+  if (pageExclueDesEffets()) return;
   document.body.classList.add('fx');
+  // Numéros de section (01, 02…) seulement s'il y a au moins 2 blocs titrés
+  const blocsTitres = [...document.querySelectorAll('.bloc')].filter((b) => b.querySelector(':scope > h2'));
+  if (blocsTitres.length >= 2) document.body.classList.add('fx-numeros');
+  initialiserCompteurs();
 
   // Header : réduit + ombre dès qu'on a défilé
   const header = document.querySelector('.header');
@@ -478,12 +479,90 @@ function initialiserEffets() {
   }, { threshold: 0.12 });
 
   cibles.forEach((el) => {
-    // Léger décalage entre éléments voisins (80 ms, plafonné à 400 ms)
+    // Léger décalage entre éléments voisins (70 ms, plafonné à 350 ms)
     const rang = Array.prototype.indexOf.call(el.parentElement.children, el);
-    el.style.transitionDelay = Math.min(rang * 80, 400) + 'ms';
+    el.style.transitionDelay = Math.min(rang * 70, 350) + 'ms';
     el.classList.add('reveal');
     observateur.observe(el);
   });
 }
 // Après le DOMContentLoaded principal (header / footer déjà injectés)
 document.addEventListener('DOMContentLoaded', initialiserEffets);
+
+/* =====================================================================
+   8. CHARGEMENT, TRANSITIONS ENTRE PAGES, COMPTEURS
+   Pas sur connexion.html ni secret.html (la transition CRT et
+   l'intro du site caché restent intactes).
+   ===================================================================== */
+function pageExclueDesEffets() {
+  return !!document.getElementById('form-connexion')
+    || /(^|\/)secret\.html$/.test(location.pathname);
+}
+
+(function initialiserChargementEtTransitions() {
+  if (pageExclueDesEffets()) return;
+  const racine = document.documentElement;
+  const reduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduit) return;
+
+  // Fondu d'entrée de la page (classe posée avant le premier affichage)
+  racine.classList.add('pkx-entree');
+
+  // Écran de chargement : une seule fois par session (≤ 0,8 s)
+  let dejaVu = false;
+  try { dejaVu = sessionStorage.getItem('pkx_chargement_vu') === '1'; } catch (e) { dejaVu = true; }
+  if (!dejaVu) {
+    try { sessionStorage.setItem('pkx_chargement_vu', '1'); } catch (e) { /* ignoré */ }
+    const ecran = document.createElement('div');
+    ecran.className = 'pkx-chargement';
+    ecran.setAttribute('aria-hidden', 'true');
+    ecran.innerHTML = '<img src="LOGOPICKAXE.png" alt=""><span class="pkx-chargement__barre"><i></i></span>';
+    racine.appendChild(ecran);
+    setTimeout(() => ecran.classList.add('pkx-chargement--fin'), 550);
+    setTimeout(() => ecran.remove(), 800);
+  }
+
+  // Fondu de sortie au clic sur un lien interne
+  document.addEventListener('click', (e) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const lien = e.target.closest('a[href]');
+    if (!lien || lien.target === '_blank' || lien.hasAttribute('download')) return;
+    const href = lien.getAttribute('href');
+    if (!href || href.startsWith('#') || /^(mailto|tel|javascript):/i.test(href)) return;
+    const cible = new URL(lien.href, location.href);
+    if (cible.origin !== location.origin) return;
+    if (cible.pathname === location.pathname && cible.hash) return;
+    e.preventDefault();
+    racine.classList.add('pkx-sortie');
+    setTimeout(() => { window.location.href = cible.href; }, 250);
+  });
+  // Retour arrière depuis le cache du navigateur : page de nouveau visible
+  window.addEventListener('pageshow', () => racine.classList.remove('pkx-sortie'));
+})();
+
+/** Chiffres clés animés (attribut data-compteur), au premier affichage */
+function initialiserCompteurs() {
+  const compteurs = document.querySelectorAll('[data-compteur]');
+  if (!compteurs.length) return;
+  const reduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduit || !('IntersectionObserver' in window)) return; // valeurs finales déjà écrites
+  const animer = (el) => {
+    const fin = parseInt(el.dataset.compteur, 10);
+    const debut = performance.now();
+    const duree = 1200;
+    const pas = (t) => {
+      const k = Math.min((t - debut) / duree, 1);
+      el.textContent = Math.round(fin * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) requestAnimationFrame(pas);
+    };
+    requestAnimationFrame(pas);
+  };
+  const obs = new IntersectionObserver((entrees) => {
+    entrees.forEach((en) => {
+      if (!en.isIntersecting) return;
+      obs.unobserve(en.target);
+      animer(en.target);
+    });
+  }, { threshold: 0.4 });
+  compteurs.forEach((el) => { el.textContent = '0'; obs.observe(el); });
+}
