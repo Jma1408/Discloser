@@ -403,10 +403,10 @@ window.addEventListener('pageshow', function (event) {
     </div>
 
     <!-- CAM-002 -->
-    <div class="camera-entry restricted">
+    <div class="camera-entry accessible">
       <div class="camera-header">
         <span class="camera-id">CAM-002</span>
-        <span class="camera-status restricted-badge">⚠ VERROUILLÉ</span>
+        <span class="camera-status">✓ ACCESSIBLE</span>
       </div>
       <div class="camera-details">
         <div class="detail-row">
@@ -421,15 +421,10 @@ window.addEventListener('pageshow', function (event) {
           <span class="label">Couverture :</span>
           <span class="value">Réunions confidentielles</span>
         </div>
-        <div class="detail-row warning">
-          <span class="label">Accessible :</span>
-          <span class="value">[CLASSIFICATION NIVEAU 5 - ACCÈS RESTREINT]</span>
-        </div>
         <div class="detail-row">
           <span class="label">Dernier enregistrement :</span>
           <span class="value">2026-09-27 15:12:04</span>
         </div>
-        <div class="alert-box">⚠ CONTENU SENSIBLE - DÉVERROUILLAGE NÉCESSAIRE</div>
       </div>
     </div>
 
@@ -512,10 +507,10 @@ window.addEventListener('pageshow', function (event) {
     </div>
 
     <!-- CAM-006 -->
-    <div class="camera-entry restricted">
+    <div class="camera-entry accessible">
       <div class="camera-header">
         <span class="camera-id">CAM-006</span>
-        <span class="camera-status restricted-badge">⚠ VERROUILLÉ</span>
+        <span class="camera-status">✓ ACCESSIBLE</span>
       </div>
       <div class="camera-details">
         <div class="detail-row">
@@ -530,15 +525,10 @@ window.addEventListener('pageshow', function (event) {
           <span class="label">Couverture :</span>
           <span class="value">Bureau directeur</span>
         </div>
-        <div class="detail-row warning">
-          <span class="label">Accessible :</span>
-          <span class="value">[CLASSIFICATION NIVEAU 5 - ACCÈS RESTREINT]</span>
-        </div>
         <div class="detail-row">
           <span class="label">Dernier enregistrement :</span>
           <span class="value">2026-09-28 10:05:33</span>
         </div>
-        <div class="alert-box">⚠ DONNÉES COMPLÈTES - DÉVERROUILLAGE NÉCESSAIRE</div>
       </div>
     </div>
   </div>
@@ -1455,7 +1445,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
   $('#start-shutdown').addEventListener('click', (e) => {
     e.stopPropagation();
     basculerMenuDemarrer(false);
-    ouvrirDialogue('Arrêter [NOM]', 'Vous n\'avez pas les autorisations nécessaires pour arrêter cet ordinateur.');
+    ouvrirDialogue('Arrêter Pickaxe MP', 'Vous n\'avez pas les autorisations nécessaires pour arrêter cet ordinateur.');
   });
 
   // Bouton "Fermer la session" : ouvre la boîte de confirmation
@@ -1520,16 +1510,15 @@ Plus d'informations lors de la prochaine réunion de coordination.`
      Déposer les vidéos (format .mp4) dans site_secret/videos/ avec ces noms,
      puis passer "disponible" à true pour la caméra concernée.
      Tant que "disponible" vaut false, un placeholder s'affiche (aucune
-     requête, donc aucune erreur dans la console).
-     locked: true = flux verrouillé (ACCESS DENIED), comme dans le document Caméras. */
+     requête, donc aucune erreur dans la console). */
   const CAMERAS = {
     '001': { video: 'videos/camera001.mp4', disponible: true },
-    '002': { video: 'videos/camera002.mp4', disponible: false, locked: true },
-    '003': { video: 'videos/camera003.mp4', disponible: false },
-    '004': { video: 'videos/camera004.mp4', disponible: false },
-    '005': { video: 'videos/camera005.mp4', disponible: false },
-    '006': { video: 'videos/camera006.mp4', disponible: false, locked: true },
-    '007': { video: 'videos/camera007.mp4', disponible: false }
+    '002': { video: 'videos/camera002.mp4', disponible: true },
+    '003': { video: 'videos/camera003.mp4', disponible: true },
+    '004': { video: 'videos/camera004.mp4', disponible: true },
+    '005': { video: 'videos/camera005.mp4', disponible: true },
+    '006': { video: 'videos/camera006.mp4', disponible: true },
+    '007': { video: 'videos/camera007.mp4', disponible: true }
   };
 
   // Animations passées d'office si l'utilisateur préfère un mouvement réduit
@@ -1791,12 +1780,6 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       }
 
       await this.type(`Établissement du flux CAM-${id}…`);
-      if (camera.locked) {
-        await this.barre('Liaison', 40, 400);
-        this.refuser(`ACCESS DENIED – flux verrouillé : /camera${id}`);
-        this.log('');
-        return;
-      }
       await this.barre('Liaison', 100, 700);
       this.ouvrirMur(id);
       await this.type(`Flux CAM-${id} ouvert.`, 'success');
@@ -1860,10 +1843,10 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       grille.className = 'terminal-mur__grille';
       Object.keys(CAMERAS).forEach((id) => {
         const cam = CAMERAS[id];
-        const etat = cam.locked ? 'verrouille' : (cam.disponible ? 'en-ligne' : 'hors-ligne');
-        const statut = cam.locked ? 'VERROUILLÉ' : (cam.disponible ? 'EN LIGNE' : 'HORS LIGNE');
-        const caseCam = document.createElement(cam.locked ? 'div' : 'button');
-        if (!cam.locked) caseCam.type = 'button';
+        const etat = cam.disponible ? 'en-ligne' : 'hors-ligne';
+        const statut = cam.disponible ? 'EN LIGNE' : 'HORS LIGNE';
+        const caseCam = document.createElement('button');
+        caseCam.type = 'button';
         caseCam.className = `terminal-mur__case terminal-mur__case--${etat}`;
         caseCam.innerHTML = `
           <span class="terminal-mur__apercu"></span>
@@ -1875,7 +1858,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
           caseCam.classList.add('terminal-mur__case--bruit');
         };
 
-        if (cam.disponible && !cam.locked) {
+        if (cam.disponible) {
           // Première image en aperçu
           const v = document.createElement('video');
           v.muted = true;
@@ -1885,19 +1868,10 @@ Plus d'informations lors de la prochaine réunion de coordination.`
           v.onerror = () => { v.remove(); bruit('SIGNAL ABSENT'); };
           apercu.appendChild(v);
         } else {
-          bruit(cam.locked ? 'ACCÈS RESTREINT' : 'SIGNAL ABSENT');
+          bruit('SIGNAL ABSENT');
         }
 
-        if (cam.locked) {
-          caseCam.setAttribute('aria-disabled', 'true');
-          caseCam.addEventListener('click', () => {
-            caseCam.classList.remove('refus');
-            void caseCam.offsetWidth; // relance l'animation de refus
-            caseCam.classList.add('refus');
-          });
-        } else {
-          caseCam.addEventListener('click', () => this.afficherCamera(id));
-        }
+        caseCam.addEventListener('click', () => this.afficherCamera(id));
         grille.appendChild(caseCam);
       });
       contenu.appendChild(grille);
@@ -2063,7 +2037,7 @@ Plus d'informations lors de la prochaine réunion de coordination.`
               await this.dechiffrer('Utilisateur: ', NOM_UTILISATEUR, 'default', 150);
               await this.dechiffrer('Domaine: ', 'PICKAXE.CORP', 'default', 150);
               await this.dechiffrer('Ordinateur: ', 'LAB-ADMIN-001', 'default', 150);
-              await this.dechiffrer('OS: ', '[NOM] Professionnel', 'default', 150);
+              await this.dechiffrer('OS: ', 'Pickaxe MP Mining Professional', 'default', 150);
               await this.dechiffrer('Version: ', 'Build 2600', 'default', 150);
               await this.dechiffrer('Niveau d\'accès: ', '4 (Administrateur)', 'default', 150);
               await this.dechiffrer('Authentification: ', 'Biométrique + Mot de passe', 'default', 150);
