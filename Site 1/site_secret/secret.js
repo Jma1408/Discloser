@@ -62,7 +62,7 @@ const INDICES_SECRET = [
     delaiMin: 2, // après le début de l'alerte
     expediteur: "A.",
     sujet: "Re : Maintenant",
-    texte: "Seb vous avait laissé les outils. Un empereur romain décalait déjà ses lettres… Comptez vos caméras.",
+    texte: "Seb vous avait laissé un décodeur César dans son document. Comptez les caméras, puis reculez d'autant de lettres.",
     actif: true
   }
 ];
@@ -2711,14 +2711,27 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       terminal.log('');
       await terminal.type('[SÉCURITÉ] Message intercepté.', 'error', 30);
       await terminal.wait(300);
-      await terminal.type('CLÉ DE CONTOURNEMENT : DMZQBM', 'warning', 30);
+      await terminal.type('Chiffrement : CODE CÉSAR', 'warning', 30);
+      // « CODE CÉSAR » en évidence (couleur d'alerte du terminal)
+      const ligne = $('#terminal-body').lastElementChild;
+      if (ligne) ligne.innerHTML = 'Chiffrement : <span class="fin-cesar">CODE CÉSAR</span>';
       await terminal.wait(300);
-      await terminal.type('Rotation = nombre de flux surveillés.', 'warning', 30);
+      await terminal.type('Clé chiffrée : DMZQBM', 'warning', 30);
+      await terminal.wait(300);
+      await terminal.type('Décalage : nombre de caméras de surveillance du site', 'warning', 30);
       terminal.log('');
       terminal.log('Clé de contournement :', 'success');
     });
     if (prompt) prompt.textContent = 'CLÉ>';
     input.placeholder = 'Clé de contournement';
+    // Aide sous le champ de saisie
+    const ligneSaisie = overlay.querySelector('.terminal-input-line');
+    if (ligneSaisie && !overlay.querySelector('.fin-aide-cle')) {
+      const aide = document.createElement('div');
+      aide.className = 'fin-aide-cle';
+      aide.textContent = 'Décalez chaque lettre en arrière dans l\'alphabet.';
+      ligneSaisie.after(aide);
+    }
     setTimeout(() => input.focus(), 10);
   }
   function finEpreuve() {
@@ -2728,6 +2741,8 @@ Plus d'informations lors de la prochaine réunion de coordination.`
     if (prompt) prompt.textContent = 'C:\\>';
     const input = $('#terminal-input');
     if (input) input.placeholder = 'Commande...';
+    const aide = overlay && overlay.querySelector('.fin-aide-cle');
+    if (aide) aide.remove();
   }
   // Pendant l'épreuve, le champ du terminal reçoit la clé (les /commandes restent utilisables)
   const executerCommande = terminal.executeCommand;
@@ -2760,9 +2775,9 @@ Plus d'informations lors de la prochaine réunion de coordination.`
     e.className = 'fin-ecran';
     e.innerHTML = `
       <section class="fin-scene fin-scene--unes">
-        <article class="fin-une"><span class="fin-une__titre">LE QUOTIDIEN NATIONAL</span><h2>Scandale PICKAXE</h2><p>Des documents internes révèlent un programme secret.</p></article>
-        <article class="fin-une fin-une--2"><span class="fin-une__titre">L'ÉCHO DU SOIR</span><h2>Le projet viral démasqué</h2><p>Un journaliste indépendant publie les preuves.</p></article>
-        <article class="fin-une fin-une--3"><span class="fin-une__titre">LA GAZETTE</span><h2>Les rédactions publient tout</h2><p>Douze médias diffusent le dossier en même temps.</p></article>
+        <article class="fin-une"><span class="fin-une__titre">LE QUOTIDIEN DU MATIN</span><h2>Scandale PICKAXE</h2><p>Des documents internes révèlent un programme secret.</p></article>
+        <article class="fin-une fin-une--2"><span class="fin-une__titre">L'ÉCHO NATIONAL</span><h2>Le projet viral démasqué</h2><p>Un journaliste indépendant publie les preuves.</p></article>
+        <article class="fin-une fin-une--3"><span class="fin-une__titre">GLOBAL HERALD</span><h2>Les rédactions publient tout</h2><p>Douze médias diffusent le dossier en même temps.</p></article>
       </section>
       <section class="fin-scene fin-scene--bourse">
         <div class="fin-bourse">
