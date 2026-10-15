@@ -583,7 +583,7 @@ window.addEventListener('pageshow', function (event) {
   const GALERIE = {
     total: 100,
     chemin: n => `labo/photo${String(n).padStart(3, '0')}.jpg`,
-    disponibles: []
+    disponibles: [1, 2, 3, 4, 5]
   };
   let currentPhotoIndex = 0;
   const totalPhotos = GALERIE.total;
@@ -694,6 +694,9 @@ window.addEventListener('pageshow', function (event) {
         updateGallery();
       });
     });
+
+    // Affichage initial (photo 1 si elle est disponible)
+    updateGallery();
   }, 10);
 
   // ONGLET DONNÉES
