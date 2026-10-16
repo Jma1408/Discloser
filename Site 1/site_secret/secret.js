@@ -2728,6 +2728,8 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       await terminal.wait(300);
       await terminal.type('Clé chiffrée : DMZQBM', 'warning', 30);
       await terminal.wait(300);
+      await terminal.type('[SYS] Clé vulnérable : brute force possible en 8 bits.', 'error', 30);
+      await terminal.wait(300);
       await terminal.type('Décalage : nombre de caméras de surveillance du site', 'warning', 30);
       terminal.log('');
       terminal.log('Clé de contournement :', 'success');
