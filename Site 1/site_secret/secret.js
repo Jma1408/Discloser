@@ -28,7 +28,7 @@ const INDICES_SECRET = [
   },
   {
     id: "donnees",
-    apres: "decryptage",
+    apres: "terminal", // 10 min après l'ouverture du terminal
     action: "déverrouiller l'onglet Données",
     delaiMin: 10,
     expediteur: "Claire (RH)",
@@ -330,7 +330,6 @@ window.addEventListener('pageshow', function (event) {
 
     <div class="documents-section">
       <h3>Documents de Référence</h3>
-      <p class="doc-notice">[Documents supplémentaires disponibles après décryptage]</p>
       
       <div class="document-list">
         <div class="document-item" data-id="doc-1">
@@ -1910,15 +1909,6 @@ Plus d'informations lors de la prochaine réunion de coordination.`
   // Animations passées d'office si l'utilisateur préfère un mouvement réduit
   const MOUVEMENT_REDUIT = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /** Documents d'Informations : censure levée (état gardé pour la session) */
-  function appliquerDecryptage() {
-    const infos = $('#contenu-informations');
-    if (infos) infos.classList.add('decrypte');
-    majScrollbar();
-  }
-  try {
-    if (sessionStorage.getItem('docs_decryptes') === '1') appliquerDecryptage();
-  } catch (e) {}
 
   const terminal = {
     history: [],
@@ -2372,26 +2362,6 @@ Plus d'informations lors de la prochaine réunion de coordination.`
       if (video) chargerMedia(video, camera.video, { zone: ecran, lancer: true });
     },
 
-    /* ---------- Décryptage des documents (Cmd/Ctrl+Shift+X) ---------- */
-    decrypter: function() {
-      this.run(async () => {
-        if (sessionStorage.getItem('docs_decryptes') === '1') {
-          await this.type('Documents d\'Informations déjà décryptés.', 'success');
-        } else {
-          await this.type('Décryptage des documents d\'Informations…');
-          await this.dechiffrer('  Protocole du Site ........ ', 'OK', 'default', 600);
-          await this.dechiffrer('  Caméras de Surveillance .. ', 'OK', 'default', 600);
-          await this.barre('Déchiffrement', 100, 700);
-          try { sessionStorage.setItem('docs_decryptes', '1'); } catch (e) {}
-          indicesSecret.fait('decryptage'); // lance le timer de l'étape Données
-          appliquerDecryptage();
-          await this.type('Documents d\'Informations décryptés', 'success', 15);
-        }
-        this.log('');
-        this.log('C:\\>');
-      });
-    },
-
     executeCommand: function(cmd) {
       this.log(cmd);
       this.log('');
@@ -2465,7 +2435,6 @@ Plus d'informations lors de la prochaine réunion de coordination.`
               this.log('');
               await this.type('Raccourcis clavier disponibles:', 'success', 8);
               await this.type('  Cmd+Shift+D  - Ouvrir/Fermer le terminal', 'default', 6);
-              await this.type('  Cmd+Shift+X  - Lever la censure des documents', 'default', 6);
               await this.type('  Échap        - Fermer le terminal', 'default', 6);
               await this.type('  ↑/↓          - Parcourir l\'historique', 'default', 6);
               await this.type('  Tab          - Autocomplétion (à venir)', 'default', 6);
@@ -2521,22 +2490,13 @@ Plus d'informations lors de la prochaine réunion de coordination.`
             if (input) input.focus();
           }, 10);
           terminal.ouverture();
-          indicesSecret.fait('terminal'); // lance le timer du décryptage
+          indicesSecret.fait('terminal'); // lance le timer de l'étape Données
         } else {
           terminal.fermerMur();
           $('#terminal-input').blur();
         }
       }
     }
-  });
-
-  // Raccourci Cmd/Ctrl+Shift+X : lever la censure (terminal ouvert uniquement)
-  document.addEventListener('keydown', (e) => {
-    if (!((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'KeyX')) return;
-    const overlay = $('#terminal-overlay');
-    if (!overlay || !overlay.classList.contains('visible')) return;
-    e.preventDefault();
-    terminal.decrypter();
   });
 
   // Échap pour fermer le terminal
@@ -2759,8 +2719,13 @@ Plus d'informations lors de la prochaine réunion de coordination.`
   // Pendant l'épreuve, le champ du terminal reçoit la clé (les /commandes restent utilisables)
   const executerCommande = terminal.executeCommand;
   terminal.executeCommand = function (cmd) {
-    if (!fin.epreuve || cmd.startsWith('/')) return executerCommande.call(this, cmd);
+    const alerte = fin.epreuve || lireFin().etape === 'alerte';
+    if (!alerte) return executerCommande.call(this, cmd);
     this.log(cmd);
+    if (cmd.startsWith('/')) { // pare-feu actif : aucune commande n'est exécutée
+      this.refuser('COMMANDE BLOQUÉE — pare-feu actif. Saisissez la clé de contournement.');
+      return;
+    }
     const cle = cmd.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/\s+/g, '');
     if (cle && empreinte('pkx-fin:' + cle) === EMPREINTE_CLE_FIN) reussite();
     else this.refuser('Clé rejetée');
